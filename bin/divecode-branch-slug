@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# divecode-branch-slug — derive a kebab-case slug from a feature title.
+#
+# Usage:
+#   divecode-branch-slug "<title>" [<max_length>]
+#
+# Rules:
+#   - lower-case
+#   - strip leading articles (the, a, an)
+#   - replace any non-alphanumeric run with a single dash
+#   - collapse multiple dashes
+#   - trim leading/trailing dashes
+#   - truncate to max_length without breaking a word
+
+set -uo pipefail
+
+TITLE="${1:-}"
+MAX="${2:-50}"
+
+[ -z "$TITLE" ] && { echo "usage: divecode-branch-slug \"<title>\" [<max>]" >&2; exit 2; }
+
+# Lower-case
+s=$(printf '%s' "$TITLE" | tr '[:upper:]' '[:lower:]')
+
+# Replace non-alphanumeric runs with a single dash
+s=$(printf '%s' "$s" | LC_ALL=C sed -E 's/[^a-z0-9]+/-/g')
+
+# Trim leading/trailing dashes
+s=$(printf '%s' "$s" | sed -E 's/^-+//;s/-+$//')
+
+# Strip leading article (the- / a- / an-)
+s=$(printf '%s' "$s" | sed -E 's/^(the|a|an)-//')
+
+# Truncate without breaking a word
+if [ "${#s}" -gt "$MAX" ]; then
+  cut=$(printf '%s' "$s" | cut -c1-"$MAX")
+  # If we cut mid-word, drop the trailing partial word
+  if [ "${cut: -1}" != "-" ] && [ "${s:$MAX:1}" != "-" ] && [ -n "${s:$MAX:1}" ]; then
+    cut=$(printf '%s' "$cut" | sed -E 's/-[^-]*$//')
+  fi
+  s=$(printf '%s' "$cut" | sed -E 's/-+$//')
+  # Drop a trailing article if it ended up at the end (awkward slug)
+  last=$(printf '%s' "$s" | awk -F- '{print $NF}')
+  case "$last" in
+    the|a|an) s=$(printf '%s' "$s" | sed -E 's/-[^-]*$//') ;;
+  esac
+fi
+
+printf '%s\n' "$s"

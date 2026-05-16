@@ -1,0 +1,64 @@
+# Design
+
+> Unified design artifact (divecode v0.2 standard/strict profile). 7 sections — 6 canonical per agent-flow plus UX (divecode-original).
+
+## 1. Interview (grill-me)
+_(record interrogation summary; cite lore entries by relative path if injected via Relevant lore block)_
+
+## 2. Spec
+- Goal:
+- In-scope:
+- Out-of-scope:
+- Acceptance criteria:
+- Observable behavior:
+- Dependencies:
+- Open risks:
+
+## 3. DDD model
+- Aggregates (and consistency boundaries):
+- Bounded contexts touched:
+- Ubiquitous language terms (new or refined):
+- Domain events (past tense, minimal payload):
+- Repository contracts:
+
+_(For trivial/non-domain changes: "no domain model impact" and explain.)_
+
+## 4. Clean Architecture layer map
+- domain:
+- usecase:
+- data:
+- presentation:
+
+_(Verify dependency direction — inner layers must not import from outer.)_
+
+## 5. SOLID check
+- SRP:
+- OCP:
+- LSP:
+- ISP:
+- DIP:
+
+## 6. Decision log
+### Directives
+| ID | Decision | Source |
+|---|---|---|
+
+### Rejected
+| ID | Approach | Why rejected | Date |
+|---|---|---|---|
+
+### Constraints
+| ID | Constraint | Source |
+|---|---|---|
+
+_(All entries auto-mirrored to .divecode/lore/decisions/ by divecode-spec/standard.)_
+
+## 7. UX
+- "UI 있어?" → (yes / no — if no, explain non-UI surface)
+- 5-state coverage:
+  - Ideal:
+  - Empty:
+  - Loading:
+  - Error:
+  - Edge:
+- Interaction patterns:

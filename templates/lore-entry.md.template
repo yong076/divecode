@@ -1,0 +1,13 @@
+---
+name: __NAME__
+kind: __KIND__       # Constraint | Rejected | Directive
+scope: __SCOPE__     # user | project
+created_at: __GENERATED_AT__
+---
+
+__BODY__
+
+# Schema notes (delete in real entries):
+# - Constraint: a hard rule from the outside (legal, infra, business).
+# - Rejected: a path considered and explicitly NOT chosen — record so we don't relitigate.
+# - Directive: a positive "always do this" decision.

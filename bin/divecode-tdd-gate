@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# divecode-tdd-gate — verify a failing test exists before allowing production write.
+#
+# Usage:
+#   divecode-tdd-gate <test-file-or-command>
+#
+# Exit codes:
+#   0 — test ran and FAILED (RED satisfied, production write OK)
+#   1 — test ran and PASSED (no RED, must write a failing test first)
+#   2 — test file missing
+#   3 — test could not be run (broken/syntax error) — fix the test before proceeding
+#
+# In strict profile, divecode-implement calls this before any production file write.
+
+set -uo pipefail
+
+TEST="${1:-}"
+[ -z "$TEST" ] && { echo "usage: divecode-tdd-gate <test-file>" >&2; exit 2; }
+[ -f "$TEST" ] || { echo "missing: $TEST" >&2; exit 2; }
+
+OUTPUT=$(bash "$TEST" 2>&1)
+RC=$?
+
+# Heuristic for "broken" — non-1 exit + stderr looks like a shell syntax error
+if [ "$RC" -ne 0 ] && [ "$RC" -ne 1 ]; then
+  if printf '%s' "$OUTPUT" | LC_ALL=C grep -qiE 'syntax error|unexpected token|command not found|cannot execute'; then
+    echo "GATE: test is broken (exit $RC, not a real failing assertion)"
+    echo "OUTPUT:"
+    printf '%s\n' "$OUTPUT"
+    exit 3
+  fi
+fi
+
+# Also catch the case where test exits 0 but only printed nothing useful
+if [ "$RC" -eq 0 ]; then
+  echo "GATE: test passed — no RED. Write a failing test first."
+  echo "OUTPUT:"
+  printf '%s\n' "$OUTPUT"
+  exit 1
+fi
+
+# Non-zero exit = the test has at least one failing assertion (RED satisfied)
+echo "GATE: RED satisfied (test failed with exit $RC) — production write OK."
+echo "FAILURE OUTPUT:"
+printf '%s\n' "$OUTPUT" | head -20
+exit 0
