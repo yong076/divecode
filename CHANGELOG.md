@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.3.1 — 2026-05-17
+
+> Pack polish + Genie reframe. The 4 stubs created during v0.3 migration (nosql, performance, security, ux-apple-hig) become first-class deep packs with real triggers, failure-modes, test-ideas, and example-patterns. divecoding repositioned around the Aladdin Genie metaphor.
+
+### Added
+
+- **Genie principle** in MANIFESTO.md as the meta-rule that subsumes the 13 operational principles. Coding agents grant wishes literally; divecoding's only universal rule is *pause before granting and ask the user to specify*. Every existing phase/profile/gate is this principle at a different granularity.
+- **`/divecode-wish`** — always-on lightweight Genie pause for ad-hoc commands (no PRD required). Same trigger matcher as `/divecode-prd`, fed the user's request. Three Genie questions: (1) literal grant confirmation, (2) unspecified dependencies (drawn from matched packs), (3) the choice (specify / grant literally / refine / abandon).
+- **4 polished packs**:
+  - `nosql` — DynamoDB / Mongo / Firestore / Cassandra; hot partition, eventual consistency, single-table access patterns, document size limits
+  - `performance` — N+1, waterfall fetches, bundle bloat, cold start, offset pagination, Web Vitals
+  - `security` — IDOR, authz gap on API endpoints, secrets in git, PII in logs, CSRF, password hashing, open redirect, rate limit, CORS
+  - `ux-apple-hig` — Dynamic Type, Dark Mode, Safe Areas, 44pt touch targets, VoiceOver, Reduce Motion, sheet vs nav
+
+  Each ships with triggers + failure-modes + test-ideas + example-patterns. The 4 v0.3 stubs are now fully replaced.
+
+### Changed
+
+- README hook completely reframed around the Aladdin Genie story (was: "you wrote a three-paragraph PRD"). Same content, but legible in one paragraph and emotionally memorable.
+- README pack inventory now shows all 9 packs as ✓ — distinguishes shipped from "coming next" backlog (realtime-sync, telemetry-privacy, macos-app, github-releases).
+- README "Try it" command corrected: was `divecode-prd-triggers ...` (not on PATH for end users); now `bash ~/.divecode/bin/divecode-prd-triggers ...` (works for anyone who installed via bootstrap).
+- Agent-cat fixture demo now reports **6 packs / ~50 questions** (was 5 packs / ~40 questions) — security pack fires too via "SSO" keyword once triggers were filled.
+
+### Compatibility
+
+- All v0.3 skills + packs unchanged in behavior; only stub content was upgraded
+- No new tests required (existing test-pack-read / test-prd-triggers still pass — the migrated stubs were always valid pack structure)
+
 ## v0.3 — 2026-05-17
 
 > Product wedge. Sharpens divecoding to its actual differentiator: **PRD risk interrogation**. Drop a rough PRD in, get the failure modes back before any code is generated. AWS AI-DLC owns lifecycle; GitHub Spec Kit owns spec format; Claude Skills owns distribution — divecoding owns "what could break" given your stack.

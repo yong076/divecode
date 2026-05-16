@@ -92,21 +92,19 @@ The pack system is divecoding's question generator. A pack triggers when its key
 packs/
   redis-cache/        ✓ deep   — redis, upstash, ttl, cache stampede, eviction, lru
   postgres-saas/      ✓ deep   — postgres, neon, supabase, rds, prisma, pgbouncer
-  admin-dashboard/    ✓ deep   — admin, dashboard, ops team, auto refresh, polling
-  vercel-serverless/  ✓ deep   — vercel, edge function, cron, cold start, ISR
-  payments/           ✓ deep   — stripe, paddle, billing, webhook, refund, SCA, 3DS
+  admin-dashboard/    ✓ — admin, dashboard, ops team, auto refresh, polling
+  vercel-serverless/  ✓ — vercel, edge function, cron, cold start, ISR
+  payments/           ✓ — stripe, paddle, billing, webhook, refund, SCA, 3DS
+  nosql/              ✓ — dynamodb, mongo, firestore, cassandra, partition key, gsi
+  performance/        ✓ — latency, p99, web vitals, lighthouse, n+1, bundle size
+  security/           ✓ — oauth, jwt, csrf, xss, idor, pii, gdpr, rbac, secrets
+  ux-apple-hig/       ✓ — swiftui, ios app, dynamic type, dark mode, voiceover
 
-  nosql/              ⚠ stub   (migrated — triggers + failure-modes TODO)
-  performance/        ⚠ stub   (migrated)
-  security/           ⚠ stub   (migrated)
-  ux-apple-hig/       ⚠ stub   (migrated)
-
-  # Coming in v0.4:
-  auth-rbac/          triggers: auth, oauth, jwt, rbac
-  realtime-sync/      triggers: websocket, sse, pubsub
-  telemetry-privacy/  triggers: telemetry, analytics, pii
-  macos-app/          triggers: swiftui, menu bar, sparkle, notarization
-  github-releases/    triggers: github actions, release, dmg, codesign
+  # Coming next:
+  realtime-sync/      websocket, sse, pubsub
+  telemetry-privacy/  telemetry, analytics, pii, opt-in
+  macos-app/          menu bar, sparkle, notarization, dmg
+  github-releases/    github actions, release, codesign
 ```
 
 Each pack contains:
@@ -133,14 +131,15 @@ The skill:
 5. populates `divecode/design.md` §1 + §2 + §6 with what you answered
 6. hands off to `/divecode-spec` to fill the rest of design.md, or to `/divecode-slice-plan` if you want to jump to TDD
 
-Try it on the included fixture:
+Try it on the included fixture (no `/divecode-prd` invocation needed — just the matcher):
 
 ```bash
-divecode-prd-triggers --prd ~/.divecode/tests/fixtures/prd-admin-dashboard.md \
-                     --packs-dir ~/.divecode/packs
+bash ~/.divecode/bin/divecode-prd-triggers \
+  --prd ~/.divecode/tests/fixtures/prd-admin-dashboard.md \
+  --packs-dir ~/.divecode/packs
 ```
 
-That PRD fires all five deep packs — exactly the agent-cat admin incident this approach exists to prevent.
+That PRD (the agent-cat admin incident as a three-paragraph spec) fires six packs and surfaces ~50 questions — the Redis stampede, the cron overlap, the auto-refresh DDoS, the IDOR / SSO risk, the partition-key trap if you were going to swap in DynamoDB. The ones that actually took the system down.
 
 ## When to use it, and when not
 

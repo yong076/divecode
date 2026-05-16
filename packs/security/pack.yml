@@ -1,7 +1,4 @@
 name: security
-title: Migrated from checklists/security.md — TODO: human polish
-# Triggers MUST be filled in before this pack does anything useful.
-# Look at the questions.md content and pick 5-10 keywords/phrases that
-# would appear in a PRD touching this domain.
-triggers: TODO
-severity_default: medium
+title: Application security (auth, authz, secrets, OWASP)
+triggers: oauth, jwt, sso, csrf, xss, sql injection, pii, gdpr, hipaa, pci, soc2, authz, rbac, secrets, csp, hsts, idor, session, password, hash, encryption
+severity_default: high
