@@ -1,5 +1,9 @@
 # divecode
 
+<p align="center">
+  <img src="assets/banner.png" alt="Dive Coding — Guide the genie. Get the wish right." />
+</p>
+
 > **divecoding** is the methodology. **divecode** is the tool that does it.
 
 Remember Aladdin's first wish? "Make me a prince so I can marry the princess." The Genie granted it — literally. Aladdin got the title, the elephant, the parade. He didn't get the princess.
