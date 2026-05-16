@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# divecode-pr-watch — poll a GitHub PR via gh and emit a routing decision.
+#
+# Usage:
+#   divecode-pr-watch <pr-number>           # live fetch via gh
+#   divecode-pr-watch --fixture <file>      # parse a fixture JSON (for tests)
+#
+# Output format:
+#   status: green | has_comments | ci_failed | pending | closed | merged | error
+#   route:  merge | fix-loop | block | cleanup
+#   <details lines>
+
+set -uo pipefail
+
+FIXTURE=""
+PR=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --fixture) FIXTURE="$2"; shift 2 ;;
+    -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
+    *) PR="$1"; shift ;;
+  esac
+done
+
+# Get PR JSON
+if [ -n "$FIXTURE" ]; then
+  JSON=$(cat "$FIXTURE")
+elif [ -n "$PR" ]; then
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "status: error"
+    echo "route:  block"
+    echo "gh CLI not found"
+    exit 0
+  fi
+  JSON=$(gh pr view "$PR" --json state,mergeable,reviewDecision,statusCheckRollup,reviews,comments 2>&1) || {
+    echo "status: error"
+    echo "route:  block"
+    echo "gh pr view failed: $JSON"
+    exit 0
+  }
+else
+  echo "usage: divecode-pr-watch <pr-number> | --fixture <file>" >&2
+  exit 2
+fi
+
+# Tiny JSON probes via grep/sed — avoids hard dep on jq.
+# We're looking for top-level fields only; this is intentionally non-recursive.
+get_field() { printf '%s' "$JSON" | sed -E "s/.*\"$1\":\"([^\"]*)\".*/\1/" | head -1; }
+
+STATE=$(printf '%s' "$JSON" | sed -E 's/.*"state":"([^"]+)".*/\1/' | head -1)
+REVIEW_DEC=$(printf '%s' "$JSON" | sed -E 's/.*"reviewDecision":(null|"[^"]*").*/\1/' | head -1 | tr -d '"')
+
+# CI conclusion: any FAILURE → ci_failed; any null/IN_PROGRESS → pending; else success
+HAS_FAIL=0; HAS_PENDING=0; HAS_ANY=0
+FAILED_NAMES=""
+# crude pass over each {"name":"X","conclusion":"Y","status":"Z"} object
+while IFS= read -r chunk; do
+  [ -z "$chunk" ] && continue
+  HAS_ANY=1
+  name=$(printf '%s' "$chunk" | sed -E 's/.*"name":"([^"]+)".*/\1/')
+  concl=$(printf '%s' "$chunk" | sed -E 's/.*"conclusion":(null|"[^"]*").*/\1/' | tr -d '"')
+  status=$(printf '%s' "$chunk" | sed -E 's/.*"status":"([^"]+)".*/\1/')
+  if [ "$concl" = "FAILURE" ]; then
+    HAS_FAIL=1; FAILED_NAMES="$FAILED_NAMES $name"
+  elif [ "$concl" = "null" ] || [ "$status" = "IN_PROGRESS" ]; then
+    HAS_PENDING=1
+  fi
+done < <(printf '%s' "$JSON" | grep -oE '\{"name":"[^"]*"[^}]*\}')
+
+# Has comments? Either reviews or comments arrays non-empty
+HAS_COMMENTS=0
+if printf '%s' "$JSON" | grep -qE '"reviews":\[\{'; then HAS_COMMENTS=1; fi
+if printf '%s' "$JSON" | grep -qE '"comments":\[\{'; then HAS_COMMENTS=1; fi
+
+# Decision tree (order matters)
+if [ "$STATE" = "MERGED" ]; then
+  STATUS="merged"; ROUTE="cleanup"
+elif [ "$STATE" = "CLOSED" ]; then
+  STATUS="closed"; ROUTE="block"
+elif [ "$HAS_FAIL" -eq 1 ]; then
+  STATUS="ci_failed"; ROUTE="fix-loop"
+elif [ "$REVIEW_DEC" = "CHANGES_REQUESTED" ] || [ "$HAS_COMMENTS" -eq 1 ]; then
+  STATUS="has_comments"; ROUTE="fix-loop"
+elif [ "$HAS_PENDING" -eq 1 ]; then
+  STATUS="pending"; ROUTE="block"
+elif [ "$HAS_ANY" -eq 1 ] || [ "$REVIEW_DEC" = "APPROVED" ]; then
+  STATUS="green"; ROUTE="merge"
+else
+  STATUS="pending"; ROUTE="block"
+fi
+
+echo "status: $STATUS"
+echo "route: $ROUTE"
+[ "$HAS_FAIL" -eq 1 ] && echo "failed_checks:$FAILED_NAMES"
+echo "state: $STATE  review_decision: $REVIEW_DEC"

@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# divecode-migrate — convert v0 split files (requirements.md / design/ / ARCHITECTURE.md)
+# into v0.2 unified design.md. Archives originals under divecode/archive/v0/.
+#
+# Usage:
+#   divecode-migrate [--project <path>] [--dry-run]
+
+set -uo pipefail
+
+PROJ="$PWD"
+DRY=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --project) PROJ="$2"; shift 2 ;;
+    --dry-run) DRY=1; shift ;;
+    -h|--help) sed -n '2,8p' "$0"; exit 0 ;;
+    *) echo "unknown arg: $1" >&2; exit 2 ;;
+  esac
+done
+
+DC="$PROJ/divecode"
+REQ="$DC/requirements.md"
+DESIGN_DIR="$DC/design"
+ARCH="$DC/ARCHITECTURE.md"
+TARGET="$DC/design.md"
+ARCHIVE="$DC/archive/v0"
+
+if [ -f "$TARGET" ]; then
+  echo "already migrated: $TARGET exists"
+  exit 0
+fi
+
+if [ ! -f "$REQ" ] && [ ! -d "$DESIGN_DIR" ] && [ ! -f "$ARCH" ]; then
+  echo "no v0 artifacts to migrate at $DC"
+  exit 0
+fi
+
+if [ "$DRY" -eq 1 ]; then
+  echo "DRY RUN — would create $TARGET and archive:"
+  [ -f "$REQ" ] && echo "  $REQ → $ARCHIVE/requirements.md"
+  [ -d "$DESIGN_DIR" ] && echo "  $DESIGN_DIR/ → $ARCHIVE/design/"
+  [ -f "$ARCH" ] && echo "  $ARCH → $ARCHIVE/ARCHITECTURE.md"
+  exit 0
+fi
+
+# Compose unified design.md
+{
+  echo "# Design"
+  echo ""
+  echo "> Migrated from v0 split files by divecode-migrate on $(date -u +%Y-%m-%dT%H:%M:%SZ). Originals archived under \`divecode/archive/v0/\`."
+  echo ""
+  echo "## 1. Interview (grill-me)"
+  echo ""
+  echo "_(migration source: see archived requirements.md for the original phase-by-phase interrogation)_"
+  echo ""
+  echo "## 2. Spec"
+  echo ""
+  if [ -f "$REQ" ]; then cat "$REQ"; else echo "_(no requirements.md found)_"; fi
+  echo ""
+  echo "## 3. DDD model"
+  echo ""
+  echo "_(populate during next divecode-spec pass — was not separately recorded in v0)_"
+  echo ""
+  echo "## 4. Clean Architecture layer map"
+  echo ""
+  if [ -f "$ARCH" ]; then cat "$ARCH"; else echo "_(no ARCHITECTURE.md found)_"; fi
+  echo ""
+  echo "## 5. SOLID check"
+  echo ""
+  echo "_(populate during next divecode-spec pass — was not separately recorded in v0)_"
+  echo ""
+  echo "## 6. Decision log"
+  echo ""
+  echo "_(migration creates an empty decision log; subsequent passes should populate Constraint / Rejected / Directive)_"
+  echo ""
+  echo "## 7. UX"
+  echo ""
+  if [ -d "$DESIGN_DIR" ]; then
+    echo "Mockups (links to archived design/ directory):"
+    for f in "$DESIGN_DIR"/*.html; do
+      [ -f "$f" ] || continue
+      echo "- [$(basename "$f")](archive/v0/design/$(basename "$f"))"
+    done
+  else
+    echo "_(no design/ directory found)_"
+  fi
+} > "$TARGET"
+
+# Archive originals
+mkdir -p "$ARCHIVE"
+[ -f "$REQ" ]        && mv "$REQ" "$ARCHIVE/requirements.md"
+[ -d "$DESIGN_DIR" ] && mv "$DESIGN_DIR" "$ARCHIVE/design"
+[ -f "$ARCH" ]       && mv "$ARCH" "$ARCHIVE/ARCHITECTURE.md"
+
+echo "migrated to: $TARGET"
+echo "archived:    $ARCHIVE"

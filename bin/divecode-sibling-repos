@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# divecode-sibling-repos — discover sibling repos likely related to the
+# current project, for use by divecode-audit.
+#
+# Heuristic: take project basename, derive 2 prefixes:
+#   - dashed:    keep as-is, strip trailing version segments
+#   - collapsed: remove dashes
+# Match siblings in the parent directory whose name starts with either prefix,
+# case-insensitive. Also include title-cased variants (e.g., "AgentCatSite"
+# for project "agent-cat").
+#
+# Usage:
+#   divecode-sibling-repos <project-path>
+
+set -uo pipefail
+
+PROJ="${1:-$PWD}"
+PROJ_ABS=$(cd "$PROJ" 2>/dev/null && pwd || echo "$PROJ")
+NAME=$(basename "$PROJ_ABS")
+PARENT=$(dirname "$PROJ_ABS")
+
+# Derive base name (strip trailing -v1, -v2, etc.)
+BASE=$(echo "$NAME" | sed -E 's/-v?[0-9]+$//')
+
+# Prefixes
+DASHED="$BASE"
+COLLAPSED=$(echo "$BASE" | tr -d '-')
+TITLE=$(echo "$BASE" | awk -F- '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) substr($i,2); print}' OFS='')
+
+found=()
+for d in "$PARENT"/*; do
+  [ -d "$d" ] || continue
+  bn=$(basename "$d")
+  [ "$bn" = "$NAME" ] && continue
+  lower=$(echo "$bn" | tr '[:upper:]' '[:lower:]')
+  lower_dashed=$(echo "$DASHED" | tr '[:upper:]' '[:lower:]')
+  lower_collapsed=$(echo "$COLLAPSED" | tr '[:upper:]' '[:lower:]')
+  lower_title=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]')
+  if [[ "$lower" == "$lower_dashed"* ]] || \
+     [[ "$lower" == "$lower_collapsed"* ]] || \
+     [[ "$lower" == "$lower_title"* ]]; then
+    found+=("$bn")
+  fi
+done
+
+echo "project:  $NAME"
+echo "parent:   $PARENT"
+echo "prefixes: $DASHED, $COLLAPSED, $TITLE"
+if [ "${#found[@]}" -eq 0 ]; then
+  echo "siblings: (none)"
+else
+  echo "siblings:"
+  for f in "${found[@]}"; do echo "  - $f"; done
+fi
