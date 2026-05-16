@@ -37,14 +37,60 @@ You are the **implementer**. The spec is decided. The design is decided. The arc
 
 ```bash
 PROJ_DIR="${DIVECODE_PROJECT_DIR:-$(pwd)}"
-echo "REQS:   $PROJ_DIR/divecode/requirements.md"
-echo "DESIGN: $PROJ_DIR/divecode/design/"
-echo "ARCH:   $PROJ_DIR/divecode/ARCHITECTURE.md"
-echo ""
-echo "Reading all three before any implementation..."
+DIVECODE_HOME="${DIVECODE_HOME:-$HOME/.divecode}"
+[ -x "$DIVECODE_HOME/bin/divecode-tdd-gate" ] || DIVECODE_HOME="$HOME/Trappist/divecode"
+
+# Profile dispatch (v0.2)
+PROFILE_FILE="$PROJ_DIR/.divecode/profile.yml"
+PROFILE_KIND="light"
+TDD_GATE="off"; REPO_PATTERN="off"
+if [ -f "$PROFILE_FILE" ]; then
+  PROFILE_KIND=$(grep -E '^kind:' "$PROFILE_FILE" | head -1 | awk '{print $2}')
+  TDD_GATE=$(grep -E '^[[:space:]]+tdd:' "$PROFILE_FILE" | head -1 | awk '{print $2}')
+  REPO_PATTERN=$(grep -E '^[[:space:]]+repository_pattern:' "$PROFILE_FILE" | head -1 | awk '{print $2}')
+fi
+
+echo "PROFILE:       $PROFILE_KIND"
+echo "TDD_GATE:      $TDD_GATE       (off | warn | refuse)"
+echo "REPO_PATTERN:  $REPO_PATTERN   (off | warn | must-fix)"
+
+if [ "$PROFILE_KIND" = "light" ]; then
+  echo "ARTIFACTS: requirements.md + design/ + ARCHITECTURE.md"
+else
+  echo "ARTIFACTS: design.md + slice-plan.md"
+fi
 ```
 
-Actually read all three artifacts before writing a single line of code.
+Read all phase artifacts before writing a single line of code.
+
+## TDD gate (strict profile)
+
+When `gates.tdd: refuse`, **every slice must satisfy RED before any production code is written**. Per slice:
+
+```bash
+# After writing the test file for the slice
+bash "$DIVECODE_HOME/bin/divecode-tdd-gate" "$TEST_FILE"
+RC=$?
+case "$RC" in
+  0) echo "✓ RED satisfied — proceed with GREEN" ;;
+  1) echo "✗ test passes — write a failing assertion first"; exit 1 ;;
+  2) echo "✗ test file missing — write the test first"; exit 1 ;;
+  3) echo "✗ test is broken (syntax/compile) — fix the test before proceeding"; exit 1 ;;
+esac
+```
+
+In `warn` mode (standard profile), the same call runs but its non-zero exit is logged, not fatal. In `off` (light), the gate is skipped.
+
+## Repository Pattern check (standard / strict)
+
+When the slice touches a data layer:
+
+```bash
+bash "$DIVECODE_HOME/bin/divecode-repo-pattern-check" --project "$PROJ_DIR" --level "$REPO_PATTERN"
+```
+
+- `warn`: prints issues, exits 0
+- `must-fix`: prints issues, exits 1 — the slice does NOT GREEN until the violation is fixed
 
 ## Workflow
 

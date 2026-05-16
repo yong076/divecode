@@ -39,18 +39,59 @@ You are the **spec interrogator**. Your job is to extract every relevant assumpt
 ```bash
 PROJ_DIR="${DIVECODE_PROJECT_DIR:-$(pwd)}"
 DIVECODE_HOME="${DIVECODE_HOME:-$HOME/.divecode}"
+[ -x "$DIVECODE_HOME/bin/divecode-detect" ] || DIVECODE_HOME="$HOME/Trappist/divecode"
 mkdir -p "$PROJ_DIR/divecode"
 
-REQS="$PROJ_DIR/divecode/requirements.md"
-if [ ! -f "$REQS" ]; then
-  cp "$DIVECODE_HOME/templates/requirements.template.md" "$REQS" 2>/dev/null || \
-    echo "# Requirements" > "$REQS"
+# v0.2: profile-aware artifact target
+PROFILE_FILE="$PROJ_DIR/.divecode/profile.yml"
+PROFILE_KIND="light"
+[ -f "$PROFILE_FILE" ] && PROFILE_KIND=$(grep -E '^kind:' "$PROFILE_FILE" | head -1 | awk '{print $2}')
+
+if [ "$PROFILE_KIND" = "standard" ] || [ "$PROFILE_KIND" = "strict" ]; then
+  TARGET="$PROJ_DIR/divecode/design.md"
+  TEMPLATE="$DIVECODE_HOME/templates/design.md.template"
+  ARTIFACT_KIND="unified design.md (7 sections)"
+else
+  TARGET="$PROJ_DIR/divecode/requirements.md"
+  TEMPLATE="$DIVECODE_HOME/templates/requirements.template.md"
+  ARTIFACT_KIND="requirements.md (light profile)"
 fi
 
-echo "REQUIREMENTS FILE: $REQS"
+if [ ! -f "$TARGET" ]; then
+  cp "$TEMPLATE" "$TARGET" 2>/dev/null || echo "# ${ARTIFACT_KIND%% *}" > "$TARGET"
+fi
+
+echo "PROFILE: $PROFILE_KIND"
+echo "TARGET:  $TARGET ($ARTIFACT_KIND)"
 echo "CHECKLISTS:"
-ls "$DIVECODE_HOME/checklists/" 2>/dev/null || echo "  (none — checklists dir missing)"
+ls "$DIVECODE_HOME/checklists/" 2>/dev/null || echo "  (none)"
+
+# v0.2: inject relevant lore at start of interrogation
+if [ -x "$DIVECODE_HOME/bin/divecode-lore-cite" ]; then
+  # query keywords drawn from project name + 'spec' generally
+  bash "$DIVECODE_HOME/bin/divecode-lore-cite" "spec requirements $(basename "$PROJ_DIR")" --project "$PROJ_DIR" 2>/dev/null || true
+fi
 ```
+
+## Profile dispatch
+
+The 7 interrogation phases below are identical regardless of profile — only the artifact format differs.
+
+**Light profile** (`requirements.md`): write phase outputs as flat markdown sections (Phase 1 / Phase 2 / ...). This matches v0.
+
+**Standard / Strict profile** (`design.md`): map the 7 spec phases into the 7 design.md sections per `templates/design.md.template`:
+
+| Spec phase | design.md section |
+|---|---|
+| Phase 1 (What & Why) | §1 Interview summary |
+| Phase 2 (Users & Access) + Phase 7 (Ops) | §2 Spec |
+| Phase 3 (Data shape) | §3 DDD model |
+| Phase 4-5 (Access patterns + Failure modes) | §4 Clean Architecture layer map |
+| Phase 6 (Security) | §5 SOLID check |
+| (decisions surfaced during all phases) | §6 Decision log |
+| (UX questions covered by divecode-design) | §7 UX |
+
+In strict, **lore citation is mandatory** — every Directive/Constraint discovered during interrogation must produce a lore entry at `.divecode/lore/decisions/spec-<phase>-<name>.md`.
 
 ## The 7 phases (run in order, do not skip)
 
