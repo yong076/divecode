@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# divecode-pack-read — read fields from a pack directory.
+#
+# Usage:
+#   divecode-pack-read --triggers   <pack-dir>   # output triggers, one per line
+#   divecode-pack-read --meta       <pack-dir>   # output name + title
+#   divecode-pack-read --questions  <pack-dir>   # output questions.md content
+#   divecode-pack-read --failures   <pack-dir>   # output failure-modes.md content
+#   divecode-pack-read --tests      <pack-dir>   # output test-ideas.md content
+#   divecode-pack-read --examples   <pack-dir>   # output example-patterns.md content
+#   divecode-pack-read --all        <pack-dir>   # output everything, sectioned
+
+set -uo pipefail
+
+MODE=""
+PACK_DIR=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --triggers|--meta|--questions|--failures|--tests|--examples|--all)
+      MODE="$1"; shift ;;
+    -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
+    *)
+      PACK_DIR="$1"; shift ;;
+  esac
+done
+
+[ -n "$MODE" ] || { echo "missing mode flag" >&2; exit 2; }
+[ -n "$PACK_DIR" ] || { echo "missing pack dir" >&2; exit 2; }
+[ -d "$PACK_DIR" ] || { echo "not a directory: $PACK_DIR" >&2; exit 1; }
+
+YML="$PACK_DIR/pack.yml"
+[ -f "$YML" ] || { echo "missing pack.yml in $PACK_DIR" >&2; exit 1; }
+
+read_meta_field() {
+  grep -E "^$1:" "$YML" | head -1 | sed -E "s/^$1:[[:space:]]*//"
+}
+
+read_triggers() {
+  # Triggers are a comma-separated list on a single line:
+  #   triggers: redis, ttl, upstash, ...
+  local raw
+  raw=$(read_meta_field "triggers")
+  if [ -z "$raw" ]; then
+    return 1
+  fi
+  printf '%s\n' "$raw" | tr ',' '\n' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g' | grep -v '^$'
+}
+
+case "$MODE" in
+  --triggers)
+    out=$(read_triggers) || { echo "pack has empty triggers: $YML" >&2; exit 1; }
+    printf '%s\n' "$out"
+    ;;
+  --meta)
+    echo "name: $(read_meta_field name)"
+    echo "title: $(read_meta_field title)"
+    echo "severity_default: $(read_meta_field severity_default)"
+    ;;
+  --questions) cat "$PACK_DIR/questions.md" 2>/dev/null || true ;;
+  --failures)  cat "$PACK_DIR/failure-modes.md" 2>/dev/null || true ;;
+  --tests)     cat "$PACK_DIR/test-ideas.md" 2>/dev/null || true ;;
+  --examples)  cat "$PACK_DIR/example-patterns.md" 2>/dev/null || true ;;
+  --all)
+    echo "## $(read_meta_field name) — $(read_meta_field title)"
+    echo ""
+    for sec in questions failure-modes test-ideas example-patterns; do
+      f="$PACK_DIR/$sec.md"
+      if [ -f "$f" ]; then
+        echo "### $sec"
+        cat "$f"
+        echo ""
+      fi
+    done
+    ;;
+esac

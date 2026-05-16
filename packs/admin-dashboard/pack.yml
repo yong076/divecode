@@ -1,0 +1,4 @@
+name: admin-dashboard
+title: Internal admin / ops dashboard patterns
+triggers: admin, dashboard, internal tool, ops dashboard, control panel, ops team, internal dashboard, auto refresh, polling
+severity_default: medium
