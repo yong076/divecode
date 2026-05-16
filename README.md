@@ -1,28 +1,36 @@
 # divecode
 
-If you've been letting AI write most of your code, shipping it without really reading it, and it's mostly fine — you've been **vibe coding**. It works great until it doesn't. The day it doesn't is usually production day.
+> **divecoding** is the methodology. **divecode** is the tool that does it.
 
-divecode is a small set of Claude Code skills that does the opposite. Instead of the agent typing fast, the agent **asks you the questions you should have asked**. What's the cache invalidation strategy? Read committed or serializable? What does this screen look like with zero items in it? With ten thousand? You answer, the agent records, then code follows.
+You wrote a three-paragraph PRD. "Build an admin dashboard. Redis cache. Neon DB. Vercel cron every five minutes." You hand it to the AI. The AI builds it. It works. It ships.
 
-Think of it as Clean Code for the agent era. Clean Code told you how to write good code. divecode is about deciding what good code even means for the thing you're about to build — *before* it gets built.
+Three weeks later production lights up because the cron job and the dashboard refresh hit Redis at the same second and the cache stampede takes the origin DB down. You would have known to ask about jittered TTLs if someone had asked you.
 
-## Why bother
+**divecode is the someone.**
 
-The bugs you ship when vibe-coding are almost always things you would have known to avoid if someone had asked. The agent never asks because it doesn't know what it doesn't know — and neither, really, do you, until you see the question.
+Drop in that same rough PRD and divecode looks at it, figures out which *pattern packs* apply — redis-cache, postgres-saas, admin-dashboard, vercel-serverless — pulls the questions those packs are designed to ask, and walks you through them before any code is generated. Cache stampede. Stale fallback. Cron warm-up. Connection pool ceiling. Query fan-out. PII in telemetry. Rate-limit budget. The eight or twelve things you would have wished someone asked.
 
-divecode makes the asking systematic.
+That's the wedge. The rest of divecode — the AWS AI-DLC macro flow, the agent-flow guardrails, the TDD gate, the PR watcher — exists to make sure those answers actually shape the code that follows.
 
-It's not a planning tool. It's not a methodology framework. It's a forcing function that drops Redis, SQL isolation, N+1, eventual consistency, HIG, OWASP — the things that bite you in production — into the conversation at the moment a decision is being made.
+## What divecoding is not
+
+- **Not a planning framework.** No story points. No sprints. No estimation poker.
+- **Not a code generator.** It deliberately doesn't start writing code. It starts writing *questions*.
+- **Not a methodology in the heavy sense** — there's no certification, no ceremony, no Sprint Zero. It's "stop, surface the failure modes, then build."
+- **Not a wrapper over RAG.** Pattern packs are active question generators, not passive retrieval. A pack triggered by "redis" in your PRD doesn't dump generic Redis docs — it asks you the specific things that bite Redis users in production.
 
 ## Install
 
 ```bash
+# v0.2 (recommended — full PRD interrogation + lifecycle pipeline)
+# Until v0.2 merges to main, install from the branch:
+curl -fsSL https://raw.githubusercontent.com/yong076/divecode/feature/v0.2/bootstrap.sh | bash
+
+# v0 (current main — 6 skills, no PRD interrogation engine yet)
 curl -fsSL https://raw.githubusercontent.com/yong076/divecode/main/bootstrap.sh | bash
 ```
 
-Clones into `~/.divecode/`, symlinks the skills into `~/.claude/skills/`. Next Claude Code session, type `/divecode` from any project directory.
-
-First run looks at your repo, recommends a profile, and asks you to confirm. After that it just works.
+After v0.2 merges, both URLs land you in the same place. Until then, the `main` URL gives the simpler v0 pipeline (still useful for solo work).
 
 To remove: `bash ~/.divecode/uninstall.sh`.
 
@@ -31,15 +39,16 @@ To remove: `bash ~/.divecode/uninstall.sh`.
 divecode runs at three depths. The ceremony scales with how much you'd hate to ship a bug.
 
 - **light** — for prototypes and solo work. Four phases: spec, design (HTML mockups), arch, implement. No worktree, no PR automation, no TDD gate. This was v0.
-- **standard** — for real production work. Adds slice-plan, multi-reviewer, fix-loop, and the full commit → push-pr → pr-watch → merge → cleanup lifecycle. Spec, design, and arch collapse into one `design.md` with DDD / Clean Architecture / SOLID sections.
-- **strict** — for mission-critical code. Same shape as standard but the gates actually block you. No production code without a failing test. No data-layer code that violates the Repository Pattern. Every architectural decision must be cited from `lore/`.
+- **standard** — for real production work. Adds PRD interrogation, slice-plan, multi-reviewer, fix-loop, and the full commit → push-pr → pr-watch → merge → cleanup lifecycle.
+- **strict** — for mission-critical code. Same shape as standard, but the gates actually block you. No production code without a failing test. No data-layer code that violates the Repository Pattern. Every architectural decision must be cited from `lore/`.
 
-divecode picks one for you on first run by looking at six signals (commit history, test infra, CI config, existence of ARCHITECTURE/CONTRIBUTING, README size). You can always override.
+First run looks at your repo (commit history, test infra, CI config, ARCH/CONTRIBUTING docs, README size) and recommends one. You confirm or override.
 
 ## What a session looks like
 
 ```
 INCEPTION
+ ├─ prd         drop in a rough PRD → pattern-pack triggers fire → risk-map + open-questions emerge
  ├─ audit       only if the project is already in progress
  ├─ ux          what does this screen look like in 5 states?
  ├─ spec        7 phases of interrogation, niche-knowledge checklists pulled in
@@ -58,35 +67,63 @@ OPERATIONS
  ├─ push-pr
  ├─ pr-watch    6-status routing, auto-responds to CI failures and PR comments
  ├─ merge
- └─ cleanup     deletes the worktree, syncs main, prompts you to write down any lasting decisions as lore
+ └─ cleanup     deletes the worktree, syncs main, prompts you to record any lasting decisions as lore
 ```
 
 In light, most of construction and operations is skipped — you spec, design, build, ship. In strict, everything's there with gates that actually block. The depth adapts to your profile and to the size of the bolt you declared.
 
-## "Bolt" instead of "sprint"
+> Note: `/divecode-prd` is the next major skill (v0.3 spec is in `docs/v0.3/prd-interrogation.md`). v0.2 has the inception/construction/operations pipeline; v0.3 makes the PRD-ingest entry point a first-class citizen.
 
-A bolt is a single focused unit of work — hours to days, not weeks. The word comes from AWS's AI-DLC methodology and it's a useful one: when you start `/divecode`, it asks you for the bolt size (small / medium / large), and that answer changes how deep each phase goes. A small bolt collapses the interview to a single confirmation; a large bolt expands every phase.
+## Pattern packs (v0.3)
+
+The current `checklists/` directory (redis, sql, nosql, perf, security, ux-hig) is the seed for a richer **pack** system landing in v0.3:
+
+```
+packs/
+  redis-cache/        triggers: redis, ttl, upstash, elasticache
+  postgres-saas/      triggers: postgres, neon, supabase, rds
+  admin-dashboard/    triggers: admin, dashboard, ops, internal-tool
+  vercel-serverless/  triggers: vercel, edge, cron, function timeout
+  payments/           triggers: stripe, paddle, lemonsqueezy, billing
+  auth-rbac/          triggers: auth, oauth, jwt, roles, rbac
+  realtime-sync/      triggers: websocket, sse, supabase realtime, pubsub
+  telemetry-privacy/  triggers: telemetry, analytics, opt-in, pii
+  macos-app/          triggers: swiftui, menu bar, sparkle, notarization
+  github-releases/    triggers: github actions, release, dmg, codesign
+  ...
+```
+
+Each pack contains:
+- `triggers` — keywords divecode-prd matches against PRD text
+- `questions.md` — the actual interrogation prompts the pack fires
+- `failure-modes.md` — the production incidents this pack exists to prevent
+- `test-ideas.md` — test cases the answers should generate
+- `example-patterns.md` — concrete examples (the "show, don't tell" reference)
+
+PRs to `packs/` are the highest-leverage contribution. If you've been bitten by a class of bug that the agent should have asked you about — write a pack.
 
 ## When to use it, and when not
 
 **Use it for**: anything where a wrong decision will cost a week to undo. Data shape. Money. Auth. Multi-platform sync. Performance under real load. Anything with a database migration. Anything you'd write a postmortem about.
 
-**Don't use it for**: throwaway scripts, one-off explorations, code you'll delete in two days. The ceremony will outweigh the value. Just vibe-code those.
+**Don't use it for**: throwaway scripts, one-off explorations, code you'll delete in two days. Just vibe-code those.
 
 **Sweet spot**: a senior engineer pairing with the agent on a real feature. Or two engineers — one asks the dumb questions, the other answers from experience, the agent surfaces the third thing neither of them would have thought to ask.
 
+## Where divecoding sits
+
+| Tool / methodology | Strength | What it doesn't try to do |
+|---|---|---|
+| AWS AI-DLC | Lifecycle macro flow (Inception → Construction → Operations) and the "bolt" unit | Domain-specific failure-mode surfacing |
+| GitHub Spec Kit | Spec-driven development, structured spec format | Production risk interrogation per stack |
+| Claude Skills | Distribution + execution format for agent capabilities | Methodology layer on top |
+| **divecoding** | **PRD interrogation → human-in-loop decision extraction → niche failure-mode surface** | Owning the full SDLC, replacing your ticket system |
+
+divecode steals freely: AWS for the macro shape, agent-flow for the phase-internal guardrails, Clean Code for the discipline-is-the-feature stance, Spec Kit for the artifact-first orientation. Its own contribution is the **PRD risk interrogation engine** and the **pattern pack** library that powers it.
+
 ## A note on tone
 
-The skills speak a mix of Korean and English because that's how I work, and how my teammates work. You can fork and re-tone for your team. The checklists themselves are language-agnostic; only the agent's prompt phrasing has Korean in it.
-
-## Where the ideas come from
-
-- [AWS AI-DLC](https://aws.amazon.com/blogs/devops/ai-driven-development-life-cycle/) — three-phase macro flow (Inception / Construction / Operations) and the bolt unit
-- agent-flow — phase-internal guardrails (DDD lens, Clean Architecture layer map, SOLID check, TDD red → green → refactor, 6-status pr-watch routing)
-- Clean Code (Robert Martin) — for the "discipline is the feature" stance
-- hop's agent pair programming — for the human-in-the-loop ralph idea
-
-divecode's own additions are the UX phase, the niche-knowledge checklists in `checklists/`, the audit mode for in-progress projects, the usage-limit awareness, and the Korean-first tone.
+The skills speak a mix of Korean and English because that's how I work and how my teammates work. You can fork and re-tone for your team. The packs themselves are language-agnostic; only the agent's prompt phrasing has Korean in it.
 
 ## Layout
 
@@ -94,15 +131,18 @@ divecode's own additions are the UX phase, the niche-knowledge checklists in `ch
 divecode/
 ├── bin/          small bash scripts the skills call (detect, bolt, lore, tdd-gate, pr-watch, ...)
 ├── skills/       SKILL.md files — what Claude Code reads
-├── checklists/   niche knowledge (redis, sql, nosql, perf, security, ux-hig). PRs welcome here especially.
+├── checklists/   v0 niche knowledge (redis, sql, nosql, perf, security, ux-hig).
+│                 Becoming packs/ in v0.3.
+├── packs/        (v0.3) pattern packs that drive PRD interrogation
 ├── templates/    profile.yml, design.md, slice-plan.md, lore-entry, review templates
 ├── tests/        bash test suites for the bin/ scripts
-└── docs/v0.2/    design.md + slice-plan.md from when v0.2 was specced (meta-dogfood)
+└── docs/         v0.2/ — divecode's own meta-spec
+                  v0.3/ — PRD interrogation engine spec
 ```
 
 ## Contributing
 
-The single most useful PR you can send is a new entry in `checklists/`. If you've been bitten by a class of bug that the agent should have asked you about — write it up as a checklist item with the trigger keywords, the questions to ask, and one or two concrete sub-points. That's where the leverage is.
+The single most useful PR you can send is a new pack in `packs/` (or, until v0.3 lands, a new entry in `checklists/`). If you've been bitten by a class of bug that the agent should have asked you about — write it up as a pack with triggers, questions, failure modes, and one or two example patterns. That's where the leverage is.
 
 For new skills or pipeline phases, open an issue first so we can talk about where it fits.
 
