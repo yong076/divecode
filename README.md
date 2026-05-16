@@ -1,87 +1,111 @@
 # divecode
 
-> **Vibe coding의 반대편.** 에이전트가 코드를 흘려보내게 두지 말고, 디테일을 끝까지 파고들어 함께 만든다.
+If you've been letting AI write most of your code, shipping it without really reading it, and it's mostly fine — you've been **vibe coding**. It works great until it doesn't. The day it doesn't is usually production day.
 
-Clean Code가 *어떻게 쓸지*를 가르쳤다면, **divecode는 *무엇을, 왜* 만들지를 에이전트와 함께 끝까지 캐묻는 방법**이다. 5단계 파이프라인을 인간이 페이스메이커가 되어 ralph-loop처럼 함께 돈다.
+divecode is a small set of Claude Code skills that does the opposite. Instead of the agent typing fast, the agent **asks you the questions you should have asked**. What's the cache invalidation strategy? Read committed or serializable? What does this screen look like with zero items in it? With ten thousand? You answer, the agent records, then code follows.
 
-## 1줄 설치
+Think of it as Clean Code for the agent era. Clean Code told you how to write good code. divecode is about deciding what good code even means for the thing you're about to build — *before* it gets built.
+
+## Why bother
+
+The bugs you ship when vibe-coding are almost always things you would have known to avoid if someone had asked. The agent never asks because it doesn't know what it doesn't know — and neither, really, do you, until you see the question.
+
+divecode makes the asking systematic.
+
+It's not a planning tool. It's not a methodology framework. It's a forcing function that drops Redis, SQL isolation, N+1, eventual consistency, HIG, OWASP — the things that bite you in production — into the conversation at the moment a decision is being made.
+
+## Install
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/yong076/divecode/main/bootstrap.sh | bash
 ```
 
-이 한 줄이 하는 일:
-1. `~/.divecode/`에 clone
-2. `~/.claude/skills/divecode*` 로 심링크 (Claude Code가 인식)
-3. 다음 세션부터 `/divecode`로 호출 가능
+Clones into `~/.divecode/`, symlinks the skills into `~/.claude/skills/`. Next Claude Code session, type `/divecode` from any project directory.
 
-업데이트는 같은 명령 다시 실행. 제거는 `bash ~/.divecode/uninstall.sh`.
+First run looks at your repo, recommends a profile, and asks you to confirm. After that it just works.
 
-## 사용
+To remove: `bash ~/.divecode/uninstall.sh`.
 
-프로젝트 디렉토리에서:
+## Profiles
+
+divecode runs at three depths. The ceremony scales with how much you'd hate to ship a bug.
+
+- **light** — for prototypes and solo work. Four phases: spec, design (HTML mockups), arch, implement. No worktree, no PR automation, no TDD gate. This was v0.
+- **standard** — for real production work. Adds slice-plan, multi-reviewer, fix-loop, and the full commit → push-pr → pr-watch → merge → cleanup lifecycle. Spec, design, and arch collapse into one `design.md` with DDD / Clean Architecture / SOLID sections.
+- **strict** — for mission-critical code. Same shape as standard but the gates actually block you. No production code without a failing test. No data-layer code that violates the Repository Pattern. Every architectural decision must be cited from `lore/`.
+
+divecode picks one for you on first run by looking at six signals (commit history, test infra, CI config, existence of ARCHITECTURE/CONTRIBUTING, README size). You can always override.
+
+## What a session looks like
 
 ```
-/divecode
+INCEPTION
+ ├─ audit       only if the project is already in progress
+ ├─ ux          what does this screen look like in 5 states?
+ ├─ spec        7 phases of interrogation, niche-knowledge checklists pulled in
+ └─ slice-plan  break it into TDD-ready chunks
+                ⏸ pause for human review
+
+CONSTRUCTION
+ ├─ worktree    branch + worktree per your profile
+ ├─ implement   write the failing test first, then the code
+                (in strict, the agent literally refuses to write production code without a failing test)
+ ├─ review      multiple reviewer agents spawned in parallel; architecture-design specialist is mandatory
+ └─ fix-loop    address must-fix findings; max 3 rounds, then escalate
+
+OPERATIONS
+ ├─ commit      convention-aware, profile-driven
+ ├─ push-pr
+ ├─ pr-watch    6-status routing, auto-responds to CI failures and PR comments
+ ├─ merge
+ └─ cleanup     deletes the worktree, syncs main, prompts you to write down any lasting decisions as lore
 ```
 
-divecode가 현재 단계를 자동으로 판단해서 다음 스킬로 분기한다. 직접 호출도 가능:
+In light, most of construction and operations is skipped — you spec, design, build, ship. In strict, everything's there with gates that actually block. The depth adapts to your profile and to the size of the bolt you declared.
 
-| Skill | 산출물 | 역할 |
-|---|---|---|
-| `/divecode-spec` | `divecode/requirements.md` | 도메인·성능·DB·edge case를 끝까지 캐묻는 심문 |
-| `/divecode-design` | `divecode/design/*.html` | HTML 와이어프레임 + "이 케이스 봤어?" 질문 루프 |
-| `/divecode-arch` | `divecode/ARCHITECTURE.md` | DTO·레이어·경계·트랜잭션 결정 |
-| `/divecode-implement` | (소스 코드) | 산출물 보면서 구현 — 매 단계 인간 확인 |
-| `/divecode-status` | (콘솔 출력) | 사용량 한도 추적, "지금 돌리면 한도 걸려" 사전 경고 |
+## "Bolt" instead of "sprint"
 
-## Iron Laws
+A bolt is a single focused unit of work — hours to days, not weeks. The word comes from AWS's AI-DLC methodology and it's a useful one: when you start `/divecode`, it asks you for the bolt size (small / medium / large), and that answer changes how deep each phase goes. A small bolt collapses the interview to a single confirmation; a large bolt expands every phase.
 
-1. **인간이 답하지 않은 질문은 가정으로 채우지 않는다.** 멈추고 묻는다.
-2. **모든 단계의 산출물(.md/.html)을 인간이 검토해야 다음 단계로 넘어간다.**
-3. **niche 지식은 체크리스트로 강제 노출한다.** Redis cache stampede, isolation level, N+1, eventual consistency, HIG 등.
-4. **Ralph loop이 아니라 human-in-the-loop ralph.** 사람이 페이스메이커.
+## When to use it, and when not
 
-전체 원칙은 [MANIFESTO.md](MANIFESTO.md).
+**Use it for**: anything where a wrong decision will cost a week to undo. Data shape. Money. Auth. Multi-platform sync. Performance under real load. Anything with a database migration. Anything you'd write a postmortem about.
 
-## Vibe coding과의 차이
+**Don't use it for**: throwaway scripts, one-off explorations, code you'll delete in two days. The ceremony will outweigh the value. Just vibe-code those.
 
-| | Vibe coding | divecode |
-|---|---|---|
-| 코드 검토 | 안 함 (흘러가게 둠) | 매 단계 인간 검토 강제 |
-| 요구사항 | "이거 만들어줘" 한 줄 | 도메인 전문가 수준 심문 |
-| 디자인 | 에이전트가 알아서 | HTML mockup → 인간 확인 |
-| 아키텍처 | 묻지 않음 | DTO/레이어/경계까지 합의 |
-| 페이스 | 에이전트가 결정 | 인간이 결정 |
-| 결과 | 빠른 prototype | 같이 만든 시스템 |
+**Sweet spot**: a senior engineer pairing with the agent on a real feature. Or two engineers — one asks the dumb questions, the other answers from experience, the agent surfaces the third thing neither of them would have thought to ask.
 
-vibe coding이 빠른 prototype을 만든다면, divecode는 **잘못된 코드가 빨리 만들어지는 걸 막는** 도구다.
+## A note on tone
 
-## 사용량 추적
+The skills speak a mix of Korean and English because that's how I work, and how my teammates work. You can fork and re-tone for your team. The checklists themselves are language-agnostic; only the agent's prompt phrasing has Korean in it.
 
-`/divecode-status`는 다음 순서로 사용량 도구를 찾는다:
-1. [`llm-usage-cli`](https://github.com/yong076/llm-usage-cli) (Codex/Claude/Gemini 통합)
-2. [`ccusage`](https://github.com/ryoppippi/ccusage) (Claude 전용)
-3. 둘 다 없으면 휴리스틱 안내 ("이 작업은 큰 변경이라 5시간 한도 절반 정도 쓸 것 같음")
+## Where the ideas come from
 
-큰 작업 시작 전 `/divecode-status`로 한 번 확인하는 게 좋다.
+- [AWS AI-DLC](https://aws.amazon.com/blogs/devops/ai-driven-development-life-cycle/) — three-phase macro flow (Inception / Construction / Operations) and the bolt unit
+- agent-flow — phase-internal guardrails (DDD lens, Clean Architecture layer map, SOLID check, TDD red → green → refactor, 6-status pr-watch routing)
+- Clean Code (Robert Martin) — for the "discipline is the feature" stance
+- hop's agent pair programming — for the human-in-the-loop ralph idea
 
-## 디자인 통합
+divecode's own additions are the UX phase, the niche-knowledge checklists in `checklists/`, the audit mode for in-progress projects, the usage-limit awareness, and the Korean-first tone.
 
-`/divecode-design`은 다음 순서로 디자인 도구를 찾는다:
-1. [`open-design`](https://github.com/nexu-io/open-design) — 본격 design system 작업이면 위임
-2. 없으면 inline HTML mockup 생성 (외부 의존 없음, 브라우저에서 바로 확인 가능)
+## Layout
 
-## 어떤 사람에게 맞나
+```
+divecode/
+├── bin/          small bash scripts the skills call (detect, bolt, lore, tdd-gate, pr-watch, ...)
+├── skills/       SKILL.md files — what Claude Code reads
+├── checklists/   niche knowledge (redis, sql, nosql, perf, security, ux-hig). PRs welcome here especially.
+├── templates/    profile.yml, design.md, slice-plan.md, lore-entry, review templates
+├── tests/        bash test suites for the bin/ scripts
+└── docs/v0.2/    design.md + slice-plan.md from when v0.2 was specced (meta-dogfood)
+```
 
-- 백/프론트/앱/인프라를 다 아우르는 시니어 — divecode가 진가를 발휘함
-- 또는 그런 동료와 페어로 앉아 같이 답하는 주니어 — 학습 도구로도 작동
-- 혼자 처음부터 다 답할 자신이 없으면? 그래도 됨 — 모르는 질문이 나오면 거기가 학습 포인트
+## Contributing
 
-## 라이센스
+The single most useful PR you can send is a new entry in `checklists/`. If you've been bitten by a class of bug that the agent should have asked you about — write it up as a checklist item with the trigger keywords, the questions to ask, and one or two concrete sub-points. That's where the leverage is.
 
-MIT.
+For new skills or pipeline phases, open an issue first so we can talk about where it fits.
 
-## 기여
+## License
 
-PR 환영. 특히 `checklists/`에 새로운 niche 지식 항목 추가하는 PR이 가장 가치 있다.
+MIT. Use it, fork it, change the tone, change the language, ship it inside your company's tooling. If it saves you from one production incident it's paid for itself.
