@@ -1,0 +1,4 @@
+name: vercel-serverless
+title: Vercel / serverless function patterns
+triggers: vercel, edge function, edge runtime, serverless, lambda, cron, cron job, function timeout, cold start, isr, on-demand revalidation
+severity_default: medium

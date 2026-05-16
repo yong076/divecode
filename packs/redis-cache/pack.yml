@@ -1,0 +1,4 @@
+name: redis-cache
+title: Redis / KV cache patterns
+triggers: redis, upstash, elasticache, kv cache, ttl, cache stampede, jittered ttl, eviction, lru
+severity_default: medium

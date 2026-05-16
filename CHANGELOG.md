@@ -1,5 +1,47 @@
 # Changelog
 
+## v0.3 — 2026-05-17
+
+> Product wedge. Sharpens divecoding to its actual differentiator: **PRD risk interrogation**. Drop a rough PRD in, get the failure modes back before any code is generated. AWS AI-DLC owns lifecycle; GitHub Spec Kit owns spec format; Claude Skills owns distribution — divecoding owns "what could break" given your stack.
+
+### Added
+
+**`/divecode-prd` skill** — Inception entry that ingests a PRD, fires pattern-pack triggers, surfaces failure modes as a `risk-map.md`, walks you through `open-questions.md` with provenance prefixes, and populates `design.md` §1 + §2 + §6.
+
+**Pattern pack system** in `packs/`:
+- 5 hand-written deep packs (~10-30 questions, 6-9 failure modes, 4-8 test ideas, 3-5 example patterns each):
+  - `redis-cache` — TTL / stampede / eviction / connection pool
+  - `postgres-saas` — connection management / migrations / N+1 / replica lag / drift
+  - `admin-dashboard` — auth gaps / auto-refresh DDoS / destructive actions / PII
+  - `vercel-serverless` — timeouts / cold starts / cron overlap / connection storms / 3DS
+  - `payments` — idempotency / webhook replay / source-of-truth drift / dunning / SCA
+- 4 stub packs migrated from v0 checklists (carry the questions; need human polish for triggers + failure-modes): `nosql`, `performance`, `security`, `ux-apple-hig`
+
+**Trigger matcher** `bin/divecode-prd-triggers` — scans PRD against every pack's `pack.yml triggers` list. Word-boundary matching for single-word triggers (`ttl` won't match `throttle`); literal substring for multi-word (`cache stampede`). Case-insensitive. Output is one section per matched pack with which triggers fired.
+
+**Pack reader** `bin/divecode-pack-read` — read mode flags (`--triggers / --meta / --questions / --failures / --tests / --examples / --all`). Used by `/divecode-prd` to compose risk-map and open-questions.
+
+**Migration script** `bin/divecode-pack-migrate` — scaffold packs from existing `checklists/*.md`. Idempotent. Maps known checklist names (redis → redis-cache, sql → postgres-saas, etc.); preserves any pack that already exists. The 4 stub packs above were created by this script.
+
+**Tests** — 3 new bash test suites (`test-pack-read`, `test-prd-triggers`, `test-pack-migrate`): 25 new assertions. End-to-end smoke: the included `tests/fixtures/prd-admin-dashboard.md` (the agent-cat war-story PRD) fires all 5 deep packs.
+
+### Changed
+
+- README now documents the pack system as live (`✓ deep` vs `⚠ stub`), shows a "Trying it" section with concrete command, and includes the agent-cat fixture as the canonical demo
+- README's pack roadmap distinguishes shipped vs v0.4 backlog
+
+### Compatibility
+
+- `checklists/` directory preserved — packs scaffolded from it, but legacy paths still work
+- `/divecode` entry SKILL routing unchanged; `/divecode-prd` is an alternative inception entry, not a replacement for `/divecode-spec`
+- v0.2 lore + bolt + profile machinery unchanged
+
+### Known limitations
+
+- 4 migrated packs (nosql / performance / security / ux-apple-hig) need human-written triggers before they'll fire — `triggers: TODO` placeholder by design (don't auto-pick keywords)
+- Trigger matching is deterministic keyword-based; no LLM-driven expansion in v0.3 (deferred to v0.4 per design.md decision R1)
+- False positive on payments pack for PRDs that mention "billing" in out-of-scope sections — `/divecode-prd` Step 3 user confirmation is the safety net
+
 ## v0.2 — 2026-05-17
 
 > Methodology layer. divecode = AWS AI-DLC macro (Inception → Construction → Operations) + agent-flow phase-internal guardrails + divecode-original additions (UX, niche-knowledge checklists, audit, usage awareness, profile/bolt adaptive depth).

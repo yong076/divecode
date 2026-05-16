@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+# divecode-pack-migrate — scaffold packs from legacy checklists/*.md files.
+#
+# For each checklist not yet mapped to a pack, creates a minimal pack:
+#   <pack>/pack.yml         (TODO triggers — needs human editing)
+#   <pack>/questions.md     (carried over from the checklist)
+#   <pack>/failure-modes.md (stub)
+#   <pack>/test-ideas.md    (stub)
+#   <pack>/example-patterns.md (stub)
+#
+# Idempotent: re-running skips any checklist whose target pack already exists.
+#
+# Usage:
+#   divecode-pack-migrate [--checklists <dir>] [--packs <dir>]
+
+set -uo pipefail
+
+CHECKLISTS_DIR=""
+PACKS_DIR=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --checklists) CHECKLISTS_DIR="$2"; shift 2 ;;
+    --packs) PACKS_DIR="$2"; shift 2 ;;
+    -h|--help) sed -n '2,18p' "$0"; exit 0 ;;
+    *) echo "unknown: $1" >&2; exit 2 ;;
+  esac
+done
+
+[ -z "$CHECKLISTS_DIR" ] && CHECKLISTS_DIR="${DIVECODE_HOME:-$HOME/.divecode}/checklists"
+[ -z "$PACKS_DIR" ] && PACKS_DIR="${DIVECODE_HOME:-$HOME/.divecode}/packs"
+
+[ -d "$CHECKLISTS_DIR" ] || { echo "no checklists dir: $CHECKLISTS_DIR" >&2; exit 1; }
+mkdir -p "$PACKS_DIR"
+
+# Heuristic mapping: checklist filename → pack name
+pack_name_for() {
+  case "$1" in
+    redis)    echo "redis-cache" ;;
+    sql)      echo "postgres-saas" ;;
+    nosql)    echo "nosql" ;;
+    perf)     echo "performance" ;;
+    security) echo "security" ;;
+    ux-hig)   echo "ux-apple-hig" ;;
+    *)        echo "$1" ;;
+  esac
+}
+
+made=0
+skipped=0
+
+for cl in "$CHECKLISTS_DIR"/*.md; do
+  [ -f "$cl" ] || continue
+  stem=$(basename "$cl" .md)
+  pack_name=$(pack_name_for "$stem")
+  pack_dir="$PACKS_DIR/$pack_name"
+
+  if [ -d "$pack_dir" ]; then
+    echo "  - $stem → $pack_name: skipped (pack already exists)"
+    skipped=$((skipped+1))
+    continue
+  fi
+
+  mkdir -p "$pack_dir"
+  # pack.yml — TODO triggers, marked as migrated from checklist
+  cat > "$pack_dir/pack.yml" <<EOF
+name: $pack_name
+title: Migrated from checklists/$stem.md — TODO: human polish
+# Triggers MUST be filled in before this pack does anything useful.
+# Look at the questions.md content and pick 5-10 keywords/phrases that
+# would appear in a PRD touching this domain.
+triggers: TODO
+severity_default: medium
+EOF
+  # questions.md — carry the checklist over verbatim
+  cp "$cl" "$pack_dir/questions.md"
+  # stubs for the other three files
+  cat > "$pack_dir/failure-modes.md" <<EOF
+# failure-modes — $pack_name
+
+TODO: write the production incidents this pack exists to prevent.
+Use redis-cache or postgres-saas as the reference format:
+each failure mode = title + 1-paragraph body + detection signal.
+EOF
+  cat > "$pack_dir/test-ideas.md" <<EOF
+# test-ideas — $pack_name
+
+TODO: write concrete test cases the answers should produce.
+EOF
+  cat > "$pack_dir/example-patterns.md" <<EOF
+# example-patterns — $pack_name
+
+TODO: write 2-3 reference snippets showing "this is what good looks like."
+EOF
+  echo "  + $stem → $pack_name: created"
+  made=$((made+1))
+done
+
+echo ""
+echo "made: $made   skipped: $skipped"

@@ -2,15 +2,27 @@
 
 > **divecoding** is the methodology. **divecode** is the tool that does it.
 
-You wrote a three-paragraph PRD. "Build an admin dashboard. Redis cache. Neon DB. Vercel cron every five minutes." You hand it to the AI. The AI builds it. It works. It ships.
+Remember Aladdin's first wish? "Make me a prince so I can marry the princess." The Genie granted it — literally. Aladdin got the title, the elephant, the parade. He didn't get the princess.
 
-Three weeks later production lights up because the cron job and the dashboard refresh hit Redis at the same second and the cache stampede takes the origin DB down. You would have known to ask about jittered TTLs if someone had asked you.
+**Coding agents are genies.** They take your wish literally. If your wish is *"build me an admin dashboard with Redis cache and a cron job that runs every five minutes,"* they'll grant it — exactly as worded. The Genie won't ask whether you want jittered TTLs. Whether the cron should be idempotent when runs overlap. What the dashboard should look like when the cache is cold. That's not in your wish.
 
-**divecode is the someone.**
+Three weeks later production lights up because none of those things were in your wish.
 
-Drop in that same rough PRD and divecode looks at it, figures out which *pattern packs* apply — redis-cache, postgres-saas, admin-dashboard, vercel-serverless — pulls the questions those packs are designed to ask, and walks you through them before any code is generated. Cache stampede. Stale fallback. Cron warm-up. Connection pool ceiling. Query fan-out. PII in telemetry. Rate-limit budget. The eight or twelve things you would have wished someone asked.
+**divecoding is the Genie that asks back before granting.** Drop in a rough wish — a PRD, a command, a sketch. divecode looks at it, recognizes which *pattern packs* apply (redis-cache, admin-dashboard, vercel-serverless, postgres-saas, payments), and walks you through the questions you didn't think to specify. Cache stampede. Cron overlap. Auto-refresh DDoS. Replica lag. SCA dropoff. The wish you *actually meant*.
 
-That's the wedge. The rest of divecode — the AWS AI-DLC macro flow, the agent-flow guardrails, the TDD gate, the PR watcher — exists to make sure those answers actually shape the code that follows.
+That's the wedge. The rest of divecode — the AWS AI-DLC macro flow, the agent-flow guardrails, the TDD gate, the PR watcher — exists to make sure the wish-as-clarified survives all the way to the code.
+
+## The Genie principle
+
+Before granting any wish, divecode asks:
+
+1. **What you literally asked for** is X. Confirm.
+2. **Things you didn't specify but the wish depends on**: A, B, C. (Drawn from packs that triggered.)
+3. **The Genie will grant X strictly as worded** unless you specify those now. Want to?
+
+This is divecoding's only universal rule. The phases (inception → construction → operations), the profiles (light / standard / strict), the packs, the gates — all of those exist to operationalize the Genie pause at the right granularity. A throwaway script gets a one-line pause. A payments integration gets a 20-question pause. Same principle either way.
+
+The reason this works: **the Genie can grant anything** (modern agents will write nearly any code you ask for). The bottleneck is no longer capability — it's specificity. divecoding makes the specificity itself the work.
 
 ## What divecoding is not
 
@@ -72,25 +84,29 @@ OPERATIONS
 
 In light, most of construction and operations is skipped — you spec, design, build, ship. In strict, everything's there with gates that actually block. The depth adapts to your profile and to the size of the bolt you declared.
 
-> Note: `/divecode-prd` is the next major skill (v0.3 spec is in `docs/v0.3/prd-interrogation.md`). v0.2 has the inception/construction/operations pipeline; v0.3 makes the PRD-ingest entry point a first-class citizen.
+## Pattern packs
 
-## Pattern packs (v0.3)
-
-The current `checklists/` directory (redis, sql, nosql, perf, security, ux-hig) is the seed for a richer **pack** system landing in v0.3:
+The pack system is divecoding's question generator. A pack triggers when its keywords appear in your PRD, then fires the questions / failure modes / test ideas it carries. Five hand-written deep packs ship with v0.3; four more are scaffolded from the v0 checklists and ready for human polish:
 
 ```
 packs/
-  redis-cache/        triggers: redis, ttl, upstash, elasticache
-  postgres-saas/      triggers: postgres, neon, supabase, rds
-  admin-dashboard/    triggers: admin, dashboard, ops, internal-tool
-  vercel-serverless/  triggers: vercel, edge, cron, function timeout
-  payments/           triggers: stripe, paddle, lemonsqueezy, billing
-  auth-rbac/          triggers: auth, oauth, jwt, roles, rbac
-  realtime-sync/      triggers: websocket, sse, supabase realtime, pubsub
-  telemetry-privacy/  triggers: telemetry, analytics, opt-in, pii
+  redis-cache/        ✓ deep   — redis, upstash, ttl, cache stampede, eviction, lru
+  postgres-saas/      ✓ deep   — postgres, neon, supabase, rds, prisma, pgbouncer
+  admin-dashboard/    ✓ deep   — admin, dashboard, ops team, auto refresh, polling
+  vercel-serverless/  ✓ deep   — vercel, edge function, cron, cold start, ISR
+  payments/           ✓ deep   — stripe, paddle, billing, webhook, refund, SCA, 3DS
+
+  nosql/              ⚠ stub   (migrated — triggers + failure-modes TODO)
+  performance/        ⚠ stub   (migrated)
+  security/           ⚠ stub   (migrated)
+  ux-apple-hig/       ⚠ stub   (migrated)
+
+  # Coming in v0.4:
+  auth-rbac/          triggers: auth, oauth, jwt, rbac
+  realtime-sync/      triggers: websocket, sse, pubsub
+  telemetry-privacy/  triggers: telemetry, analytics, pii
   macos-app/          triggers: swiftui, menu bar, sparkle, notarization
   github-releases/    triggers: github actions, release, dmg, codesign
-  ...
 ```
 
 Each pack contains:
@@ -101,6 +117,30 @@ Each pack contains:
 - `example-patterns.md` — concrete examples (the "show, don't tell" reference)
 
 PRs to `packs/` are the highest-leverage contribution. If you've been bitten by a class of bug that the agent should have asked you about — write a pack.
+
+## Trying it (v0.3)
+
+```bash
+# in a project with a rough PRD
+/divecode-prd path/to/PRD.md
+```
+
+The skill:
+1. fires `bin/divecode-prd-triggers` against your PRD
+2. confirms the matched packs with you (you can drop any false positives)
+3. renders `divecode/risk-map.md` with the failure modes from each pack
+4. walks you through the union of `questions.md` from those packs
+5. populates `divecode/design.md` §1 + §2 + §6 with what you answered
+6. hands off to `/divecode-spec` to fill the rest of design.md, or to `/divecode-slice-plan` if you want to jump to TDD
+
+Try it on the included fixture:
+
+```bash
+divecode-prd-triggers --prd ~/.divecode/tests/fixtures/prd-admin-dashboard.md \
+                     --packs-dir ~/.divecode/packs
+```
+
+That PRD fires all five deep packs — exactly the agent-cat admin incident this approach exists to prevent.
 
 ## When to use it, and when not
 

@@ -1,0 +1,4 @@
+name: payments
+title: Payments / billing / subscription patterns
+triggers: stripe, paddle, lemonsqueezy, payment, billing, subscription, invoice, refund, webhook, checkout, dunning, chargeback, sca
+severity_default: high

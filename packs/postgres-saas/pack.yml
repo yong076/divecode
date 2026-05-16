@@ -1,0 +1,4 @@
+name: postgres-saas
+title: Postgres-on-SaaS patterns (Neon, Supabase, RDS, etc.)
+triggers: postgres, postgresql, neon, supabase, rds, prisma, drizzle, sequelize, migration, connection pool, pgbouncer
+severity_default: medium
