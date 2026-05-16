@@ -1,7 +1,4 @@
 name: nosql
-title: Migrated from checklists/nosql.md — TODO: human polish
-# Triggers MUST be filled in before this pack does anything useful.
-# Look at the questions.md content and pick 5-10 keywords/phrases that
-# would appear in a PRD touching this domain.
-triggers: TODO
+title: NoSQL store patterns (DynamoDB, Mongo, Firestore, Cassandra)
+triggers: dynamodb, dynamo, mongodb, mongo, firestore, cassandra, partition key, single-table, eventual consistency, gsi, lsi, scylla
 severity_default: medium

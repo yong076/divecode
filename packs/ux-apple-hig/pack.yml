@@ -1,7 +1,4 @@
 name: ux-apple-hig
-title: Migrated from checklists/ux-hig.md — TODO: human polish
-# Triggers MUST be filled in before this pack does anything useful.
-# Look at the questions.md content and pick 5-10 keywords/phrases that
-# would appear in a PRD touching this domain.
-triggers: TODO
+title: Apple HIG / SwiftUI / iOS / macOS UX patterns
+triggers: swiftui, swift ui, ios app, macos app, hig, dynamic type, dark mode, visionos, vision os, watchos, watch os, accessibility, voiceover, safe area, touch target, sf symbols, sheet, popover
 severity_default: medium
