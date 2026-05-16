@@ -2,15 +2,27 @@
 
 > **divecoding** is the methodology. **divecode** is the tool that does it.
 
-You wrote a three-paragraph PRD. "Build an admin dashboard. Redis cache. Neon DB. Vercel cron every five minutes." You hand it to the AI. The AI builds it. It works. It ships.
+Remember Aladdin's first wish? "Make me a prince so I can marry the princess." The Genie granted it — literally. Aladdin got the title, the elephant, the parade. He didn't get the princess.
 
-Three weeks later production lights up because the cron job and the dashboard refresh hit Redis at the same second and the cache stampede takes the origin DB down. You would have known to ask about jittered TTLs if someone had asked you.
+**Coding agents are genies.** They take your wish literally. If your wish is *"build me an admin dashboard with Redis cache and a cron job that runs every five minutes,"* they'll grant it — exactly as worded. The Genie won't ask whether you want jittered TTLs. Whether the cron should be idempotent when runs overlap. What the dashboard should look like when the cache is cold. That's not in your wish.
 
-**divecode is the someone.**
+Three weeks later production lights up because none of those things were in your wish.
 
-Drop in that same rough PRD and divecode looks at it, figures out which *pattern packs* apply — redis-cache, postgres-saas, admin-dashboard, vercel-serverless — pulls the questions those packs are designed to ask, and walks you through them before any code is generated. Cache stampede. Stale fallback. Cron warm-up. Connection pool ceiling. Query fan-out. PII in telemetry. Rate-limit budget. The eight or twelve things you would have wished someone asked.
+**divecoding is the Genie that asks back before granting.** Drop in a rough wish — a PRD, a command, a sketch. divecode looks at it, recognizes which *pattern packs* apply (redis-cache, admin-dashboard, vercel-serverless, postgres-saas, payments), and walks you through the questions you didn't think to specify. Cache stampede. Cron overlap. Auto-refresh DDoS. Replica lag. SCA dropoff. The wish you *actually meant*.
 
-That's the wedge. The rest of divecode — the AWS AI-DLC macro flow, the agent-flow guardrails, the TDD gate, the PR watcher — exists to make sure those answers actually shape the code that follows.
+That's the wedge. The rest of divecode — the AWS AI-DLC macro flow, the agent-flow guardrails, the TDD gate, the PR watcher — exists to make sure the wish-as-clarified survives all the way to the code.
+
+## The Genie principle
+
+Before granting any wish, divecode asks:
+
+1. **What you literally asked for** is X. Confirm.
+2. **Things you didn't specify but the wish depends on**: A, B, C. (Drawn from packs that triggered.)
+3. **The Genie will grant X strictly as worded** unless you specify those now. Want to?
+
+This is divecoding's only universal rule. The phases (inception → construction → operations), the profiles (light / standard / strict), the packs, the gates — all of those exist to operationalize the Genie pause at the right granularity. A throwaway script gets a one-line pause. A payments integration gets a 20-question pause. Same principle either way.
+
+The reason this works: **the Genie can grant anything** (modern agents will write nearly any code you ask for). The bottleneck is no longer capability — it's specificity. divecoding makes the specificity itself the work.
 
 ## What divecoding is not
 

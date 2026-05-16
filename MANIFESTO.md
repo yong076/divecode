@@ -3,6 +3,18 @@
 > Code that nobody understood was once written fast.
 > divecode is the opposite bet: **understanding is the bottleneck, not typing.**
 
+## The Genie Principle (the one that subsumes the rest)
+
+In *Aladdin*, the Genie can grant anything — but only takes the words literally. Aladdin's first attempts go badly because his wishes aren't specific enough: "make me a prince" gets him the title without the love; "save me from drowning" makes him fall instead.
+
+Coding agents are genies. They will write nearly any code you ask for, but they take your wish literally. The bottleneck on shipping good software is no longer the Genie's capability. It is the **specificity of your wish**.
+
+divecoding's entire job is to make you wish better. Before any nontrivial code is generated, the agent pauses in **Genie mode**:
+
+> "You wished for X. To grant X well I'd also need to know about A, B, and C. Want to specify those, or should I grant X literally and you accept the consequences?"
+
+Every phase, every pack, every gate in divecode is the Genie mode applied at a different granularity. The 13 principles below are the operational rules. The Genie principle is *why* they exist.
+
 ## 13 Principles
 
 ### 1. vibe coding is not bad. It's just a different game.
