@@ -4,98 +4,114 @@
   <img src="assets/banner.png" alt="Dive Coding — Guide the genie. Get the wish right." />
 </p>
 
-> **divecoding** is the methodology. **divecode** is the tool that does it.
+<p align="center">
+  <strong>한국어</strong> ·
+  <a href="README.en.md">English</a> ·
+  <a href="README.ja.md">日本語</a> ·
+  <a href="README.zh-Hans.md">简体中文</a>
+</p>
 
-Remember Aladdin's first wish? "Make me a prince so I can marry the princess." The Genie granted it — literally. Aladdin got the title, the elephant, the parade. He didn't get the princess.
+> **divecoding** 은 방법론, **divecode** 는 그걸 실행하는 도구.
 
-**Coding agents are genies.** They take your wish literally. If your wish is *"build me an admin dashboard with Redis cache and a cron job that runs every five minutes,"* they'll grant it — exactly as worded. The Genie won't ask whether you want jittered TTLs. Whether the cron should be idempotent when runs overlap. What the dashboard should look like when the cache is cold. That's not in your wish.
+알라딘의 첫 번째 소원 기억나세요? "공주랑 결혼하게 왕자로 만들어줘." 지니는 그대로 들어줬어요 — 말 그대로. 알라딘은 왕자 칭호, 코끼리, 행렬을 다 얻었지만, 공주는 못 얻었죠.
 
-Three weeks later production lights up because none of those things were in your wish.
+**코딩 에이전트는 지니입니다.** 소원을 말 그대로 들어줘요. *"Redis 캐시와 5분마다 도는 cron job 있는 admin dashboard 만들어줘"* 라고 하면 — 그 문장 그대로 구현됩니다. 지니는 TTL에 jitter를 줄 건지 안 물어봐요. cron 실행이 겹칠 때 idempotent하게 처리할지 안 물어봐요. 캐시가 cold일 때 dashboard가 어떻게 보일지 안 물어봐요. 그건 소원에 안 적혀있었으니까.
 
-**divecoding is the Genie that asks back before granting.** Drop in a rough wish — a PRD, a command, a sketch. divecode looks at it, recognizes which *pattern packs* apply (redis-cache, admin-dashboard, vercel-serverless, postgres-saas, payments), and walks you through the questions you didn't think to specify. Cache stampede. Cron overlap. Auto-refresh DDoS. Replica lag. SCA dropoff. The wish you *actually meant*.
+3주 뒤 프로덕션에 불이 납니다. 적혀있지 않았던 것들이 다 터지면서.
 
-That's the wedge. The rest of divecode — the AWS AI-DLC macro flow, the agent-flow guardrails, the TDD gate, the PR watcher — exists to make sure the wish-as-clarified survives all the way to the code.
+**divecoding 은 소원을 들어주기 전에 되묻는 지니입니다.** 대충 쓴 소원 — PRD든, 한 줄 명령이든, 스케치든 — 던져 넣으면, divecode가 그 안에서 어떤 *pattern packs* 가 걸리는지 찾아내고 (redis-cache, admin-dashboard, vercel-serverless, postgres-saas, payments…), 당신이 미처 명시하지 못한 질문들을 하나씩 묻습니다. Cache stampede. Cron 겹침. Auto-refresh DDoS. Replica lag. SCA 중도이탈. *당신이 진짜로 원했던* 소원.
 
-## The Genie principle
+그게 핵심입니다. 나머지 — AWS AI-DLC macro flow, agent-flow guardrail, TDD gate, PR watcher — 는 명확해진 소원이 실제 코드까지 살아남도록 보호하는 장치들이에요.
 
-Before granting any wish, divecode asks:
+## 지니 원칙 (The Genie principle)
 
-1. **What you literally asked for** is X. Confirm.
-2. **Things you didn't specify but the wish depends on**: A, B, C. (Drawn from packs that triggered.)
-3. **The Genie will grant X strictly as worded** unless you specify those now. Want to?
+어떤 소원이든 들어주기 전에 divecode는 묻습니다:
 
-This is divecoding's only universal rule. The phases (inception → construction → operations), the profiles (light / standard / strict), the packs, the gates — all of those exist to operationalize the Genie pause at the right granularity. A throwaway script gets a one-line pause. A payments integration gets a 20-question pause. Same principle either way.
+1. **당신이 말 그대로 빈 소원은** X. 맞아요?
+2. **명시 안 했지만 X가 의존하는 것들**: A, B, C. (걸린 packs에서 추출.)
+3. **지금 명시 안 하면 X는 글자 그대로** 들어집니다. 명시할래요?
 
-The reason this works: **the Genie can grant anything** (modern agents will write nearly any code you ask for). The bottleneck is no longer capability — it's specificity. divecoding makes the specificity itself the work.
+이게 divecoding의 유일한 보편 규칙입니다. 페이즈 (inception → construction → operations), 프로파일 (light / standard / strict), packs, gates — 전부 이 지니의 멈춤을 적절한 입도로 구현하는 장치들이에요. throwaway script는 한 줄짜리 멈춤, payments 통합은 20문항짜리 멈춤. 원리는 같음.
 
-## What divecoding is not
+이게 작동하는 이유: **지니는 뭐든 들어줄 수 있다** (요즘 에이전트는 거의 모든 코드를 작성합니다). 병목은 더 이상 능력이 아니라 **구체성**입니다. divecoding은 그 구체성 자체를 작업으로 만듭니다.
 
-- **Not a planning framework.** No story points. No sprints. No estimation poker.
-- **Not a code generator.** It deliberately doesn't start writing code. It starts writing *questions*.
-- **Not a methodology in the heavy sense** — there's no certification, no ceremony, no Sprint Zero. It's "stop, surface the failure modes, then build."
-- **Not a wrapper over RAG.** Pattern packs are active question generators, not passive retrieval. A pack triggered by "redis" in your PRD doesn't dump generic Redis docs — it asks you the specific things that bite Redis users in production.
+## divecoding이 아닌 것
 
-## Install
+- **기획 프레임워크 아님.** 스토리포인트도, 스프린트도, 추정 포커도 없어요.
+- **코드 생성기 아님.** 의도적으로 코드를 안 씁니다. 대신 *질문* 을 씁니다.
+- **무거운 방법론 아님.** 인증서도, 의식도, Sprint Zero도 없어요. "멈춰서, 실패 가능성을 끄집어내고, 그다음에 만든다" 정도.
+- **RAG 래퍼 아님.** Pattern packs는 능동적 질문 생성기이지 수동적 검색이 아닙니다. PRD에 "redis"가 있다고 일반 Redis 문서를 던지는 게 아니라, Redis 사용자가 프로덕션에서 실제로 물리는 것들을 묻습니다.
+
+## 설치
 
 ```bash
-# v0.2 (recommended — full PRD interrogation + lifecycle pipeline)
-# Until v0.2 merges to main, install from the branch:
-curl -fsSL https://raw.githubusercontent.com/yong076/divecode/feature/v0.2/bootstrap.sh | bash
-
-# v0 (current main — 6 skills, no PRD interrogation engine yet)
 curl -fsSL https://raw.githubusercontent.com/yong076/divecode/main/bootstrap.sh | bash
 ```
 
-After v0.2 merges, both URLs land you in the same place. Until then, the `main` URL gives the simpler v0 pipeline (still useful for solo work).
+`~/.divecode/` 에 clone하고 `~/.claude/skills/` 로 심링크합니다. 다음 Claude Code 세션에서 어느 프로젝트 디렉토리든 `/divecode` 호출 가능.
 
-To remove: `bash ~/.divecode/uninstall.sh`.
+첫 실행 시 repo를 보고 profile을 추천 → 사용자 확인. 그 후로는 알아서.
 
-## Profiles
+제거: `bash ~/.divecode/uninstall.sh`
 
-divecode runs at three depths. The ceremony scales with how much you'd hate to ship a bug.
+## 프로파일
 
-- **light** — for prototypes and solo work. Four phases: spec, design (HTML mockups), arch, implement. No worktree, no PR automation, no TDD gate. This was v0.
-- **standard** — for real production work. Adds PRD interrogation, slice-plan, multi-reviewer, fix-loop, and the full commit → push-pr → pr-watch → merge → cleanup lifecycle.
-- **strict** — for mission-critical code. Same shape as standard, but the gates actually block you. No production code without a failing test. No data-layer code that violates the Repository Pattern. Every architectural decision must be cited from `lore/`.
+divecode는 세 가지 깊이로 동작합니다. ceremony 수준이 버그 위험도에 맞춰 조정돼요.
 
-First run looks at your repo (commit history, test infra, CI config, ARCH/CONTRIBUTING docs, README size) and recommends one. You confirm or override.
+- **light** — prototype, 솔로 작업용. 4 phase (spec / design / arch / implement). worktree 없음, PR 자동화 없음, TDD gate 없음. v0 호환.
+- **standard** — 실제 프로덕션 작업용. PRD interrogation, slice-plan, multi-reviewer, fix-loop, 전체 lifecycle (commit → push-pr → pr-watch → merge → cleanup) 추가.
+- **strict** — mission-critical 코드용. standard와 같은 형태인데 gate가 실제로 막아요. 실패 test 없으면 production code 못 씀. Repository Pattern 위반하는 data layer 코드 금지. 모든 아키텍처 결정은 `lore/` 에서 인용 필수.
 
-## What a session looks like
+첫 실행 시 repo (commit history, test infra, CI config, ARCH/CONTRIBUTING 문서, README 크기)를 보고 추천합니다. 사용자가 확인하거나 override.
+
+## 세션 흐름
 
 ```
 INCEPTION
- ├─ prd         drop in a rough PRD → pattern-pack triggers fire → risk-map + open-questions emerge
- ├─ audit       only if the project is already in progress
- ├─ ux          what does this screen look like in 5 states?
- ├─ spec        7 phases of interrogation, niche-knowledge checklists pulled in
- └─ slice-plan  break it into TDD-ready chunks
-                ⏸ pause for human review
+ ├─ prd         대충 PRD 던지기 → pattern-pack triggers 발동 → risk-map + open-questions 산출
+ ├─ audit       이미 진행 중인 프로젝트일 때만
+ ├─ ux          이 화면이 5가지 state에서 어떻게 보이지?
+ ├─ spec        7 phase 인터로게이션, niche-knowledge 체크리스트 pull
+ └─ slice-plan  TDD-ready 청크로 분해
+                ⏸ 사람 검토를 위한 pause
 
 CONSTRUCTION
- ├─ worktree    branch + worktree per your profile
- ├─ implement   write the failing test first, then the code
-                (in strict, the agent literally refuses to write production code without a failing test)
- ├─ review      multiple reviewer agents spawned in parallel; architecture-design specialist is mandatory
- └─ fix-loop    address must-fix findings; max 3 rounds, then escalate
+ ├─ worktree    profile 기반 branch + worktree
+ ├─ implement   실패 test 먼저, 그다음 코드
+                (strict에서는 실패 test 없이는 에이전트가 production code 작성을 거부합니다)
+ ├─ review      reviewer 에이전트 다중 병렬 spawn; architecture-design 전문가는 mandatory
+ └─ fix-loop    must-fix 처리; 최대 3 round, 그 이후엔 사용자 에스컬레이션
 
 OPERATIONS
- ├─ commit      convention-aware, profile-driven
+ ├─ commit      convention 인식, profile 기반
  ├─ push-pr
- ├─ pr-watch    6-status routing, auto-responds to CI failures and PR comments
+ ├─ pr-watch    6-status routing, CI 실패 / PR 코멘트 자동 응답
  ├─ merge
- └─ cleanup     deletes the worktree, syncs main, prompts you to record any lasting decisions as lore
+ └─ cleanup     worktree 삭제, main 동기화, 남길 만한 결정은 lore로 기록 유도
 ```
 
-In light, most of construction and operations is skipped — you spec, design, build, ship. In strict, everything's there with gates that actually block. The depth adapts to your profile and to the size of the bolt you declared.
+light에서는 construction/operations 대부분이 skip — spec, design, build, ship. strict에서는 전부 활성화되고 gate가 진짜로 막음. profile + bolt 크기에 따라 깊이가 적응합니다.
+
+## "Sprint" 대신 "Bolt"
+
+bolt는 집중된 작업의 한 단위 — 주 단위가 아니라 시간 ~ 일 단위. AWS AI-DLC 용어에서 가져온 거고 쓸모 있음: `/divecode` 시작할 때 bolt 크기 (small / medium / large)를 묻고, 그 답이 각 phase 깊이를 바꿉니다. small bolt는 인터뷰가 한 줄 확인으로 collapse, large bolt는 모든 phase가 확장.
+
+## 언제 쓰고, 언제 안 쓰나
+
+**쓸 때**: 잘못된 결정 하나가 일주일 되돌리는 비용을 만드는 작업 전부. 데이터 모양. 돈. 인증. 멀티플랫폼 동기화. 실부하 성능. DB migration 포함. 포스트모템 쓸 만한 거.
+
+**안 쓸 때**: 일회용 스크립트, one-off 탐색, 이틀 뒤 지울 코드. 그냥 vibe-code 하세요.
+
+**스위트 스폿**: 시니어 엔지니어가 에이전트랑 페어로 실제 feature 작업. 또는 두 엔지니어 — 한 명이 멍청한 질문 던지고, 다른 한 명이 경험으로 답하고, 에이전트가 둘 다 생각 못 한 세 번째 걸 surface.
 
 ## Pattern packs
 
-The pack system is divecoding's question generator. A pack triggers when its keywords appear in your PRD, then fires the questions / failure modes / test ideas it carries. Five hand-written deep packs ship with v0.3; four more are scaffolded from the v0 checklists and ready for human polish:
+pack 시스템이 divecoding의 질문 생성기입니다. PRD에 키워드가 등장하면 그 pack이 트리거되고, 거기 담긴 questions / failure modes / test ideas 를 발사합니다. v0.3에서 deep pack 9개 출시:
 
 ```
 packs/
-  redis-cache/        ✓ deep   — redis, upstash, ttl, cache stampede, eviction, lru
-  postgres-saas/      ✓ deep   — postgres, neon, supabase, rds, prisma, pgbouncer
+  redis-cache/        ✓ — redis, upstash, ttl, cache stampede, eviction, lru
+  postgres-saas/      ✓ — postgres, neon, supabase, rds, prisma, pgbouncer
   admin-dashboard/    ✓ — admin, dashboard, ops team, auto refresh, polling
   vercel-serverless/  ✓ — vercel, edge function, cron, cold start, ISR
   payments/           ✓ — stripe, paddle, billing, webhook, refund, SCA, 3DS
@@ -104,38 +120,38 @@ packs/
   security/           ✓ — oauth, jwt, csrf, xss, idor, pii, gdpr, rbac, secrets
   ux-apple-hig/       ✓ — swiftui, ios app, dynamic type, dark mode, voiceover
 
-  # Coming next:
+  # 다음:
   realtime-sync/      websocket, sse, pubsub
   telemetry-privacy/  telemetry, analytics, pii, opt-in
   macos-app/          menu bar, sparkle, notarization, dmg
   github-releases/    github actions, release, codesign
 ```
 
-Each pack contains:
-- `triggers` — keywords divecode-prd matches against PRD text
-- `questions.md` — the actual interrogation prompts the pack fires
-- `failure-modes.md` — the production incidents this pack exists to prevent
-- `test-ideas.md` — test cases the answers should generate
-- `example-patterns.md` — concrete examples (the "show, don't tell" reference)
+각 pack 구성:
+- `triggers` — divecode-prd가 PRD 텍스트와 매칭할 키워드
+- `questions.md` — pack이 발사하는 실제 인터로게이션 프롬프트
+- `failure-modes.md` — 이 pack이 막으려는 프로덕션 사고들
+- `test-ideas.md` — 답이 만들어야 할 test case
+- `example-patterns.md` — 구체적 예시 ("show, don't tell" 참고용)
 
-PRs to `packs/` are the highest-leverage contribution. If you've been bitten by a class of bug that the agent should have asked you about — write a pack.
+`packs/` 에 PR 보내는 게 가장 leverage 큰 기여입니다. 에이전트가 물었어야 했던 부류의 버그에 물려본 적 있으면 — pack을 쓰세요.
 
-## Trying it (v0.3)
+## 써보기
 
 ```bash
-# in a project with a rough PRD
+# PRD 있는 프로젝트에서
 /divecode-prd path/to/PRD.md
 ```
 
-The skill:
-1. fires `bin/divecode-prd-triggers` against your PRD
-2. confirms the matched packs with you (you can drop any false positives)
-3. renders `divecode/risk-map.md` with the failure modes from each pack
-4. walks you through the union of `questions.md` from those packs
-5. populates `divecode/design.md` §1 + §2 + §6 with what you answered
-6. hands off to `/divecode-spec` to fill the rest of design.md, or to `/divecode-slice-plan` if you want to jump to TDD
+이 skill이 하는 일:
+1. PRD에 대해 `bin/divecode-prd-triggers` 실행
+2. 매칭된 pack을 사용자에게 확인 (false positive는 빼면 됨)
+3. `divecode/risk-map.md` 에 각 pack의 failure modes 렌더
+4. 매칭된 pack의 `questions.md` 합집합을 walk-through
+5. 답한 내용으로 `divecode/design.md` §1 + §2 + §6 채움
+6. design.md 나머지는 `/divecode-spec` 으로, TDD slice로 바로 점프하려면 `/divecode-slice-plan` 으로
 
-Try it on the included fixture (no `/divecode-prd` invocation needed — just the matcher):
+번들된 fixture로 바로 테스트 (`/divecode-prd` 호출 없이 matcher만):
 
 ```bash
 bash ~/.divecode/bin/divecode-prd-triggers \
@@ -143,52 +159,44 @@ bash ~/.divecode/bin/divecode-prd-triggers \
   --packs-dir ~/.divecode/packs
 ```
 
-That PRD (the agent-cat admin incident as a three-paragraph spec) fires six packs and surfaces ~50 questions — the Redis stampede, the cron overlap, the auto-refresh DDoS, the IDOR / SSO risk, the partition-key trap if you were going to swap in DynamoDB. The ones that actually took the system down.
+이 PRD (agent-cat admin 사고를 세 문단짜리 spec으로 정리)는 6개 pack을 트리거하고 ~50개 질문을 surface합니다 — Redis stampede, cron 겹침, auto-refresh DDoS, IDOR / SSO 리스크, DynamoDB로 갈아탔다면 만날 partition-key trap. 실제로 시스템 내렸던 것들.
 
-## When to use it, and when not
+## divecoding의 자리
 
-**Use it for**: anything where a wrong decision will cost a week to undo. Data shape. Money. Auth. Multi-platform sync. Performance under real load. Anything with a database migration. Anything you'd write a postmortem about.
-
-**Don't use it for**: throwaway scripts, one-off explorations, code you'll delete in two days. Just vibe-code those.
-
-**Sweet spot**: a senior engineer pairing with the agent on a real feature. Or two engineers — one asks the dumb questions, the other answers from experience, the agent surfaces the third thing neither of them would have thought to ask.
-
-## Where divecoding sits
-
-| Tool / methodology | Strength | What it doesn't try to do |
+| 도구 / 방법론 | 강점 | 시도하지 않는 것 |
 |---|---|---|
-| AWS AI-DLC | Lifecycle macro flow (Inception → Construction → Operations) and the "bolt" unit | Domain-specific failure-mode surfacing |
-| GitHub Spec Kit | Spec-driven development, structured spec format | Production risk interrogation per stack |
-| Claude Skills | Distribution + execution format for agent capabilities | Methodology layer on top |
-| **divecoding** | **PRD interrogation → human-in-loop decision extraction → niche failure-mode surface** | Owning the full SDLC, replacing your ticket system |
+| AWS AI-DLC | Lifecycle macro flow (Inception → Construction → Operations) 와 "bolt" 단위 | 도메인 특정 failure-mode surface |
+| GitHub Spec Kit | Spec-driven development, 구조화된 spec 포맷 | stack별 프로덕션 risk 인터로게이션 |
+| Claude Skills | 에이전트 capability의 배포 + 실행 포맷 | 위에 올라가는 방법론 레이어 |
+| **divecoding** | **PRD 인터로게이션 → human-in-loop 결정 추출 → niche failure-mode surface** | 전체 SDLC 소유, 티켓 시스템 대체 |
 
-divecode steals freely: AWS for the macro shape, agent-flow for the phase-internal guardrails, Clean Code for the discipline-is-the-feature stance, Spec Kit for the artifact-first orientation. Its own contribution is the **PRD risk interrogation engine** and the **pattern pack** library that powers it.
+divecode는 자유롭게 훔쳐옵니다: AWS에서 macro shape, agent-flow에서 phase-internal guardrail, Clean Code에서 "discipline-is-the-feature" 자세, Spec Kit에서 artifact-first orientation. 자기 기여는 **PRD risk interrogation engine** 과 그걸 동작시키는 **pattern pack** 라이브러리.
 
-## A note on tone
+## 톤 안내
 
-The skills speak a mix of Korean and English because that's how I work and how my teammates work. You can fork and re-tone for your team. The packs themselves are language-agnostic; only the agent's prompt phrasing has Korean in it.
+skill들이 한국어/영어 혼용으로 말합니다 — 제가 그렇게 일하고, 동료들도 그렇게 일하니까. fork해서 본인 팀에 맞게 다시 톤 잡으셔도 됩니다. pack 자체는 언어 독립적이고, 에이전트 prompt 문구만 한국어가 섞여있어요.
 
-## Layout
+## 레이아웃
 
 ```
 divecode/
-├── bin/          small bash scripts the skills call (detect, bolt, lore, tdd-gate, pr-watch, ...)
-├── skills/       SKILL.md files — what Claude Code reads
+├── bin/          skill들이 호출하는 작은 bash 스크립트 (detect, bolt, lore, tdd-gate, pr-watch, ...)
+├── skills/       SKILL.md 파일들 — Claude Code가 읽는 것
 ├── checklists/   v0 niche knowledge (redis, sql, nosql, perf, security, ux-hig).
-│                 Becoming packs/ in v0.3.
-├── packs/        (v0.3) pattern packs that drive PRD interrogation
+│                 v0.3에서 packs/ 로 흡수됨.
+├── packs/        Pattern packs (PRD interrogation의 핵심)
 ├── templates/    profile.yml, design.md, slice-plan.md, lore-entry, review templates
-├── tests/        bash test suites for the bin/ scripts
-└── docs/         v0.2/ — divecode's own meta-spec
+├── tests/        bin/ 스크립트용 bash test 묶음
+└── docs/         v0.2/ — divecode 자신의 meta-spec
                   v0.3/ — PRD interrogation engine spec
 ```
 
-## Contributing
+## 기여
 
-The single most useful PR you can send is a new pack in `packs/` (or, until v0.3 lands, a new entry in `checklists/`). If you've been bitten by a class of bug that the agent should have asked you about — write it up as a pack with triggers, questions, failure modes, and one or two example patterns. That's where the leverage is.
+가장 도움 되는 PR은 `packs/` 에 새 pack 추가입니다. 에이전트가 물었어야 할 부류의 버그에 물려본 적 있으면 — triggers + questions + failure-modes + example-patterns 갖춰서 pack으로 쓰세요. 거기가 leverage 큰 자리.
 
-For new skills or pipeline phases, open an issue first so we can talk about where it fits.
+새 skill이나 pipeline phase는 issue 먼저 열어주시면 어디 위치할지 같이 얘기.
 
-## License
+## 라이센스
 
-MIT. Use it, fork it, change the tone, change the language, ship it inside your company's tooling. If it saves you from one production incident it's paid for itself.
+MIT. 쓰시고, fork하시고, 톤 바꾸시고, 언어 바꾸시고, 회사 내부 도구에 박으세요. 프로덕션 사고 하나만 막아줘도 본전.
