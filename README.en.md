@@ -35,6 +35,31 @@ This is divecoding's only universal rule. The phases (inception → construction
 
 The reason this works: **the Genie can grant anything** (modern agents will write nearly any code you ask for). The bottleneck is no longer capability — it's specificity. divecoding makes the specificity itself the work.
 
+## Why use it
+
+A few concrete things you get, with examples from the agent-cat development that prompted divecode in the first place:
+
+**You catch the bugs before they ship, not after.**
+The agent-cat admin dashboard, three weeks pre-incident: PRD mentioned "Redis cache" and "Vercel cron every five minutes." divecode would have asked: "what's your TTL? Is it jittered? What happens when the cron fires while the dashboard is also polling?" Three questions, ten minutes. The actual incident took a Sunday afternoon to recover from.
+
+**The agent stops surprising you with structural choices.**
+"Use the Repository pattern in the data layer" isn't a rule you remember at 11pm. It's a question the agent asks before it writes the next file. Same for "should this be eventually consistent or strongly consistent?" — the kind of decision that's 30 seconds to make and 3 days to undo.
+
+**Your PRDs get sharper without you writing more.**
+Drop in a three-paragraph spec. Get back a 12-question interrogation. Answer the questions. The answers become the rest of design.md — formatted, decision-logged, ready to slice into TDD chunks. That's a real spec out of a half-baked one.
+
+**Documentation becomes a side effect, not a chore.**
+Every divecode session produces design.md + risk-map.md + decision lore. Six months later when "why did we pick X?" comes up, the answer is in a file with the date and the trade-off. You didn't write it deliberately — it fell out of the workflow.
+
+**Junior and senior pair better.**
+The senior used to be the source of "did you think about replica lag?" Now divecode asks first. The senior reviews answers instead of dredging them up. The junior learns by seeing the questions, not by being lectured.
+
+**Token cost drops because the agent generates code once.**
+Vibe-coding cycles: write → realize it's wrong → rewrite → realize it's still wrong → rewrite. Each pass burns tokens. divecode front-loads the thinking so the first generation is usually the last.
+
+**The agent gets "trained" on your team's actual decisions.**
+Lore entries (`~/.divecode/lore/` + `.divecode/lore/`) carry forward across bolts and across sessions. The Constraint you set last month — "integration tests hit a real database, not mocks" — gets cited automatically in next month's design.md. Tribal knowledge becomes file knowledge.
+
 ## What divecoding is not
 
 - **Not a planning framework.** No story points. No sprints. No estimation poker.

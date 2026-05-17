@@ -35,6 +35,31 @@
 
 这之所以有效:**精灵什么都能做**(现代 agent 几乎能写任何代码)。瓶颈不再是能力,而是 **具体性**。divecoding 把"做到具体"这件事本身变成工作。
 
+## 用了有什么好处
+
+不讲抽象,讲实际能拿到手的东西。多用催生 divecode 的 agent-cat 开发实例:
+
+**Bug 在 ship 之前抓住,不是之后。**
+agent-cat admin dashboard,事故前 3 周: PRD 里写了 "Redis 缓存" 和 "Vercel cron 每 5 分钟"。divecode 本会问的问题: "TTL 多少? 有没有加 jitter? cron 在跑的时候 dashboard 还在 polling 会怎样?" 三个问题,十分钟。真实事故的恢复花掉了整个周日下午。
+
+**Agent 不再用结构决策吓你一跳。**
+"在 data layer 用 Repository pattern" 不是你晚上 11 点能想起来的规则。它会变成 agent 写下一个文件之前会反问你的问题。"这个要 eventually consistent 还是 strongly consistent?" 也一样 — 决定要 30 秒,回退要 3 天的那种。
+
+**PRD 自动变锋利,不用多写。**
+扔进一份三段的 spec。回来一份 12 个问题的审问。回答完,那些答案就是 design.md 的剩下部分 — 已经格式化、决策日志已经在、随时可以拆成 TDD chunk。一份半成品 PRD 变成真正的 spec。
+
+**文档变成副产物,不是负担。**
+每次 divecode session 都自动产出 design.md + risk-map.md + decision lore。半年后冒出来 "当时为什么这么选?" 的时候,答案在一份带日期和 trade-off 的文件里。你没有刻意写,它是 workflow 自然掉出来的。
+
+**Junior 和 senior 配对更顺。**
+以前 "你想过 replica lag 吗?" 的源头是 senior。现在 divecode 先问。senior 只 review 答案,不用每次都把它挖出来。junior 通过看问题本身来学,而不是被灌输。
+
+**Token 成本下降,因为 agent 一次写对。**
+Vibe-coding 循环: 写 → 哎不对 → 重写 → 还是不对 → 再重写。每轮都烧 token。divecode 把思考前移,所以第一次生成往往就是最后一次。
+
+**Agent 被你团队的真实决策"训练"。**
+Lore 条目 (`~/.divecode/lore/` + `.divecode/lore/`) 在 bolt 之间、session 之间传递。上个月你定的 Constraint — "integration test 打真实 DB,不准 mock" — 下个月的 design.md 里会被自动引用。部落知识变成文件知识。
+
 ## divecoding 不是什么
 
 - **不是规划框架。** 没有 story point,没有 sprint,没有估算扑克。
