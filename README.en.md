@@ -35,6 +35,38 @@ This is divecoding's only universal rule. The phases (inception → construction
 
 The reason this works: **the Genie can grant anything** (modern agents will write nearly any code you ask for). The bottleneck is no longer capability — it's specificity. divecoding makes the specificity itself the work.
 
+## What developers used to do
+
+What vibe coding taught us:
+- Code can flow out fast.
+- Most code is roughly the same regardless of who wrote it.
+- Agents can do the typing.
+
+What it didn't teach us:
+- Why it was written that way.
+- Which trade-offs were considered.
+- Who's going to read this code a month from now.
+
+Developers used to be the ones who did the latter. Before typing a single line — read the requirement carefully, sketch the edge cases, draw the data model, pick the algorithm, anticipate the failure modes, decide the trade-offs, *then* hit the keyboard.
+
+Vibe coding compressed these seven steps into one: "describe what you want, accept what comes." The time dropped, and so did the seven steps. Each dropped step lays one incident, one month out.
+
+Dive coding restores them. The agent keeps the typing job, but the *thinking* steps that used to come before typing get handed back to the human. The agent extracts that thinking through *questions* instead of code.
+
+| | Vibe coding | Dive coding |
+|---|---|---|
+| Input | One-line wish | Specification (progressively sharpened) |
+| Pace | Agent decides | Human decides |
+| Output | Code, then rework | Decisions, then code that holds |
+| Discovery point | In production (weeks later) | Before the keyboard (minutes later) |
+| Developer's role | Typing supervisor | The one who specifies |
+| Skill exercised | Accepting | Judgment · taste · knowledge |
+| Documentation | "should write some" | Falls out of the workflow |
+| Good for | Exploration, throwaways, demos | Anything you'd write a postmortem about |
+| Analogy | Dictation | Conversation |
+
+Dive coding returns us from vibe-wisher to more deliberate wisher. Not by giving the agent better answers — by setting the human up to ask better questions.
+
 ## Why use it
 
 A few concrete things you get, with examples from the agent-cat development that prompted divecode in the first place:
