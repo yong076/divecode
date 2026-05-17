@@ -1,0 +1,43 @@
+# Humanize report — __FILE__
+
+Locale: __LOCALE__   ·   Generated: __GENERATED_AT__   ·   Tool: divecode-humanize
+
+## Summary
+
+| metric | before | after |
+|---|---|---|
+| s1 hits | __S1_BEFORE__ | __S1_AFTER__ |
+| total hits | __HITS_BEFORE__ | __HITS_AFTER__ |
+| words | __WORDS__ | __WORDS_AFTER__ |
+| change rate | — | __CHANGE_RATE__ % |
+| grade | — | __GRADE__ |
+
+## Per-pattern before / after
+
+| ID | severity | before | after | notes |
+|---|---|---|---|---|
+
+## Examples (representative before / after pairs)
+
+### 1.
+- **before**: `__BEFORE_1__`
+- **after**:  `__AFTER_1__`
+- **rule**: __RULE_1__
+
+### 2.
+- **before**: `__BEFORE_2__`
+- **after**:  `__AFTER_2__`
+- **rule**: __RULE_2__
+
+## Residual issues
+
+(any pattern still over threshold, with reason)
+
+## What was NOT touched
+
+- Code blocks, inline code, file paths
+- URLs, identifiers, version numbers
+- Direct quotes inside "…"
+- Tables (cells preserved verbatim)
+- YAML frontmatter
+- (anything else the rewriter consciously preserved)

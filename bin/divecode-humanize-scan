@@ -1,0 +1,160 @@
+#!/usr/bin/env bash
+# divecode-humanize-scan — deterministic AI-tell pattern detector for
+# markdown text. Outputs a human-readable + machine-grepable report.
+#
+# Usage:
+#   divecode-humanize-scan [--locale ko|en] <file>
+#
+# Exit codes:
+#   0 — clean (no S1 hits, S2 within thresholds)
+#   1 — dirty (at least one S1 hit OR S2 over threshold)
+#   2 — file missing or unreadable
+
+set -uo pipefail
+
+LOCALE=""
+FILE=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --locale) LOCALE="$2"; shift 2 ;;
+    -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
+    *) FILE="$1"; shift ;;
+  esac
+done
+
+[ -n "$FILE" ] || { echo "usage: divecode-humanize-scan [--locale ko|en] <file>" >&2; exit 2; }
+[ -f "$FILE" ] || { echo "file not found: $FILE" >&2; exit 2; }
+
+# Auto-detect locale by counting Hangul vs ASCII letters
+if [ -z "$LOCALE" ]; then
+  hangul=$(LC_ALL=en_US.UTF-8 grep -oE '[가-힣]' "$FILE" 2>/dev/null | wc -l | tr -d ' ')
+  ascii=$(grep -oE '[A-Za-z]' "$FILE" 2>/dev/null | wc -l | tr -d ' ')
+  if [ "${hangul:-0}" -gt "$((ascii / 3))" ]; then
+    LOCALE="ko"
+  else
+    LOCALE="en"
+  fi
+fi
+
+WORDS=$(wc -w < "$FILE" | tr -d ' ')
+LINES=$(wc -l < "$FILE" | tr -d ' ')
+
+echo "# scan: $FILE"
+echo "locale: $LOCALE"
+echo "words:  $WORDS"
+echo "lines:  $LINES"
+echo ""
+
+hits=0
+s1_hits=0
+
+emit() {
+  # emit <id> <severity> <description> <count> <threshold>
+  local id="$1" sev="$2" desc="$3" count="$4" threshold="$5"
+  # Sanitize count: take first line, strip non-digits, default to 0
+  count=$(printf '%s' "$count" | head -1 | tr -dc '0-9')
+  count="${count:-0}"
+  if [ "$count" -ge "$threshold" ] && [ "$count" -gt 0 ]; then
+    echo "## $id [$sev] — $desc"
+    echo "count: $count (threshold: $threshold)"
+    echo ""
+    hits=$((hits + 1))
+    [ "$sev" = "S1" ] && s1_hits=$((s1_hits + 1))
+  fi
+}
+
+# Count helpers. grep -c always prints a number; trapping exit so $() captures it.
+re_count() {
+  local pat="$1" r
+  r=$(LC_ALL=en_US.UTF-8 grep -cE "$pat" "$FILE" 2>/dev/null; true)
+  printf '%s' "${r:-0}"
+}
+re_count_o() {
+  local pat="$1"
+  LC_ALL=en_US.UTF-8 grep -oE "$pat" "$FILE" 2>/dev/null | wc -l | tr -d ' '
+}
+re_count_oi() {
+  local pat="$1"
+  LC_ALL=en_US.UTF-8 grep -oEi "$pat" "$FILE" 2>/dev/null | wc -l | tr -d ' '
+}
+re_count_i() {
+  local pat="$1" r
+  r=$(LC_ALL=en_US.UTF-8 grep -cEi "$pat" "$FILE" 2>/dev/null; true)
+  printf '%s' "${r:-0}"
+}
+
+if [ "$LOCALE" = "ko" ]; then
+  # A-1: ~에 대해
+  emit "A-1" "S1" "~에 대해 (번역투)"            "$(re_count_o '에 대해')" 1
+  # A-2: ~를/을 통해 남발
+  emit "A-2" "S1" "~를/을 통해 남발"             "$(re_count_o '(를|을) 통해')" 3
+  # A-3: ~에 있어
+  emit "A-3" "S1" "~에 있어 (번역투)"            "$(re_count_o '에 있어')" 1
+  # A-7: 가지고 있다
+  emit "A-7" "S1" "가지고 있다 (have+N 직역)"    "$(re_count_o '가지고 있')" 1
+  # A-8: 이중 피동
+  emit "A-8" "S1" "이중 피동 ~되어진다"          "$(re_count_o '되어진')" 1
+  # A-10: 수 있 hedging 남발 (S2 누적). Catches "할/될/높일/대비할 수 있".
+  emit "A-10" "S2" "~수 있 hedging 남발"           "$(re_count_o ' 수 있')" 2
+  # D-1: 결산 피벗
+  emit "D-1" "S1" "결산 피벗 (결론적으로/요약하면/이를 통해)" "$(re_count_o '(결론적으로|요약하면|정리하면|이를 통해|이로써)')" 1
+  # D-2: 시사하는 바
+  emit "D-2" "S1" "시사하는 바 / 주목할 만하다"   "$(re_count_o '(시사하는 바|주목할 만하다)')" 1
+  # D-3: 본질적으로
+  emit "D-3" "S1" "본질적으로 / 핵심적으로"      "$(re_count_o '(본질적으로|핵심적으로)')" 1
+  # D-4: hype 어휘 누적 (S2)
+  emit "D-4" "S1" "hype 어휘 (파격적/획기적/혁신적)" "$(re_count_o '(파격적|압도적|획기적|치명적|혁신적)')" 3
+  # H-1: 문두 접속사 (3+회)
+  emit "H-1" "S1" "문두 접속사 남발"             "$(re_count '^(또한|따라서|즉|나아가|아울러|게다가|더욱이)')" 3
+  # I-1: ~인 것이다
+  emit "I-1" "S1" "~인 것이다 / ~한 것이다 결말" "$(re_count_o '(인 것이다|한 것이다)')" 1
+  # G-1: ~것이다 / ~것입니다 결말 (S2)
+  emit "G-1" "S2" "~것이다 / ~것입니다 결말 누적" "$(re_count '(것이다|것입니다)\.\s*$')" 3
+  # J-1: 볼드 과다 (per 1000 words rough)
+  bold_count=$(($(re_count_o '\*\*') / 2))
+  threshold_bold=$(( WORDS / 50 ))   # ~20 per 1000 words
+  [ "$threshold_bold" -lt 5 ] && threshold_bold=5
+  emit "J-1" "S2" "볼드 ** 과다"                "$bold_count" "$threshold_bold"
+  # J-2: 따옴표 강조 5+회
+  emit "J-2" "S1" "따옴표 강조 남발 (5+회)"      "$(re_count_o '"[^"]+"')" 5
+  # J-3: 불릿 과다 (>40% lines)
+  bullet_count=$(re_count '^- ')
+  threshold_bullet=$(( LINES * 40 / 100 ))
+  emit "J-3" "S2" "불릿 과다 (>40% lines)"      "$bullet_count" "$threshold_bullet"
+
+elif [ "$LOCALE" = "en" ]; then
+  # EN-1: em-dash burst
+  threshold_em=$(( WORDS * 8 / 1000 ))
+  [ "$threshold_em" -lt 4 ] && threshold_em=4
+  emit "EN-1" "S2" "em-dash burst"             "$(re_count_o ' — ')" "$threshold_em"
+  # EN-2: it's not just X
+  emit "EN-2" "S1" "'it's not just X' mechanical contrast" "$(re_count_oi "(it'?s|this is) not just")" 1
+  # EN-3: hype vocabulary
+  emit "EN-3" "S1" "hype vocabulary (delve/leverage/robust/...)" "$(re_count_oi '\b(delve|leverage|robust|seamless|cutting-edge|state-of-the-art|paradigm shift)\b')" 3
+  # EN-4: closing pivot
+  emit "EN-4" "S1" "closing pivot (In conclusion / Ultimately)" "$(re_count_oi '(In conclusion|In summary|To summarize|All in all|Ultimately,)')" 1
+  # EN-5: Let me X / I'll X (allow optional heading prefix)
+  emit "EN-5" "S1" "Let me / I'll self-narration"  "$(re_count_i '^(#+ )?(Let me |I will |I'\''ll )')" 2
+  # EN-7: triplets (X, Y, and Z)
+  triplet=$(re_count_o '\b[A-Za-z]+, [A-Za-z]+, and [A-Za-z]+\b')
+  threshold_trip=$(( WORDS * 8 / 1000 ))
+  [ "$threshold_trip" -lt 3 ] && threshold_trip=3
+  emit "EN-7" "S2" "X, Y, and Z triplet overuse"   "$triplet" "$threshold_trip"
+  # EN-8: bullet overuse
+  bullet_count=$(re_count '^- ')
+  threshold_bullet=$(( LINES * 30 / 100 ))
+  emit "EN-8" "S2" "bullet overuse (>30% lines)"   "$bullet_count" "$threshold_bullet"
+  # EN-9: bold overuse
+  bold_count=$(($(re_count_o '\*\*') / 2))
+  threshold_bold=$(( WORDS * 16 / 1000 ))
+  [ "$threshold_bold" -lt 5 ] && threshold_bold=5
+  emit "EN-9" "S2" "bold ** overuse"               "$bold_count" "$threshold_bold"
+  # EN-12: marketing speak
+  emit "EN-12" "S1" "marketing speak (powered by / world-class / next-generation)" "$(re_count_oi '(powered by|world-class|industry-leading|next-generation|revolutionary)')" 1
+  # EN-14: it's worth noting
+  emit "EN-14" "S1" "'it's worth noting' / 'it's important to note'" "$(re_count_oi "it'?s (worth noting|important to note)")" 1
+fi
+
+echo "---"
+echo "summary: hits=$hits  s1_hits=$s1_hits"
+[ "$hits" -eq 0 ] && exit 0 || exit 1
